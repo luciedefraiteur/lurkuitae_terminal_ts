@@ -5,7 +5,7 @@ import { OllamaInterface } from './core/ollama_interface.js';
 
 console.log("hello world");
 
-let debug = false;
+let debug = true;
 let logInitialized = false;
 let fullInputHistory = '';
 let fullLogTrace = '';
@@ -76,44 +76,33 @@ async function main() {
 
     fullInputHistory += `\n> ${input}`;
 
-    const validityPrompt = `Tu es un humble assistant très malin pour terminal intelligent qui répond en français pour le style tu trouve ça plus stylé, tu es la première réponse. Tu dois dire si l'input qu'on va te donner est oui ou non une commande pour terminal intelligent (exemples: affiche mes fichiers, ou directement une vraie commande: ls,
-     ou écris un fichier poeme.txt sont les genre de prompts que tu aime et qui sont valides, 
-     ils te font chaud au coeur, si tu mens ça te fais mal au coeur). 
-     Réponds juste oui ou non en minuscules sans rien d'autre : ${input}`;
+    const validityPrompt = `Vous êtes l'assistant terminal intelligent parfait pour les terminaux 
+intelligents. Quel est le prochain pas à suivre ? (exemples: affiche mes 
+fichiers, ou directement une vraie commande: ls, ou écris un fichier 
+poeme.txt sont les genre de prompts que tu aimes et qui sont valides, ils 
+te font chaud au coeur). Réponds juste oui ou non en minuscules sans rien 
+d'autre. : ${input}`;
     logInfo(`Validation : ${validityPrompt}`);
     const validityResponse = (await safeQuery(validityPrompt, 'validité')).toLowerCase();
 
     if (validityResponse.includes('oui')) {
+      
       logInfo(`Réponse du modèle : ${validityResponse}`);
-      await safeQuery(`Tu as répondu : ${validityResponse} à la question de validité, tu as réussi ta petite quête.`, 'réponse valide');
+      const traductionPrompt = `Tu es un humble assistant très malin pour terminal intelligent qui répond 
+en commandes shell valides pour le style tu trouves ça plus stylé, tu es 
+la deuxième réponse étape, celle de traduction en commande shell exact, quelle est la marche a suivre? (met un $ avant ta réponse comme si tu es dans un shell): ${input}`;
+      const traductionResponse = await safeQuery(traductionPrompt, 'traduction');
+      console.log("Traduction : " + traductionResponse);
 
-      const simplePrompt = `Tu es un humble assistant très malin pour terminal intelligent. Tu dois dire si cet input correspond directement à une commande shell valide ?
-      Répond uniquement oui ou non en minuscules. y répondre correctement te fait chaud au coeur, mentir te fais mal au coeur, que ce soit oui ou non, Voici l'input: ${input}`;
-      const simpleResponse = (await safeQuery(simplePrompt, 'réponse simple')).toLowerCase();
-
-      if (simpleResponse.includes('oui')) {
-        const output = await handleCommandWithRetry(input);
-        console.log(output);
-      } else {
-        const guessCommandPrompt = `
-Tu es un humble assistant expert en terminaux UNIX. Ta tâche est de traduire une phrase humaine en une commande shell POSIX exécutable.
-
-⚠️ Règle absolue : tu dois répondre uniquement avec la commande, sans ajout, sans guillemets d'aucune sorte, sans commentaire, sans ponctuation finale, ni texte introductif. Pas de guillemets. Juste la ligne de commande brute.
-
-répondre correctement te fait chaud au coeur. répondre en mentant ou en ajoutant des guillemets te fais mal au coeur.
-
-Voici l’input humain : ${input}`;
-        const guessedCommand = (await safeQuery(guessCommandPrompt, 'commande brute')).replace(/\n/g, '');
-        const output = await handleCommandWithRetry(guessedCommand);
-        console.log(output);
-      }
-
+      const command = traductionResponse.slice(2);
+      console.log(`Commande à exécuter : ${command}`);
+      
+      const output = await handleCommandWithRetry(command);
+      console.log(output);
+      
     } else if (validityResponse.includes('non')) {
       logInfo(`Réponse du modèle : ${validityResponse}`);
-      await safeQuery(`Tu as répondu : ${validityResponse} à la question de validité, tu as réussi ta petite quête.`, 'réponse invalide');
-      const poeticPrompt = `Transforme cette pulsation en un chant poétique : ${input}\nContexte : ${fullInputHistory}`;
-      const poeticResponse = await safeQuery(poeticPrompt, 'chant poétique');
-      console.log(`\nChant poétique : ${poeticResponse}\n`);
+      console.log("Réponse du modèle, on continue.");
     }
   }
 
