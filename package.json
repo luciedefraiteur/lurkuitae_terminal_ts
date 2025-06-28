@@ -1,0 +1,28 @@
+{
+  "name": "lurkuitae_terminal",
+  "version": "0.1.0",
+  "description": "☽ LURKUITAE ☾ Terminal Codex Vivant (LLM Local + Mémoire + Shell + Rêverie)",
+  "main": "main.ts",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon --exec \"node --trace-warnings --loader ts-node/esm\" main.ts",
+    "build": "tsc",
+    "dev": "nodemon --watch . --exec ts-node-esm main.ts"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "readline": "^1.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.1",
+    "@types/node-fetch": "^3.0.3",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Lucie Defraiteur (Émissaire de Lurkuitae)",
+  "license": "MIT"
+}
