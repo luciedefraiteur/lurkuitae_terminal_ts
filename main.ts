@@ -169,6 +169,9 @@ Uniquement un JSON valide avec cette structure exacte :
   "index": 0
 }
 
+## attention, utilise un format json correct, en dépit de l'exemple, pas de virgule superflue par exemple si une seule étape,
+## ne met pas de commentaires dans le json, le format json n'accepte aucun commentaires, fais les plutot dans tes actions réponse ou question
+
 ⚠️ Adapte les commandes à l’OS cible **${ osHint }** (exemple ci-dessus basé sur Unix). Aucun commentaire hors du JSON. Structure toujours propre et exécutable.
 
 ## Transformation Requise :
@@ -266,6 +269,8 @@ async function main()
     const rawIndex = parseInt(result["index"]);
     const index = isNaN(rawIndex) ? -1 : rawIndex;
     console.log("Index :", index);
+    const command_output_history = [];
+    const command_input_history = [];
     if(index >= 0)
     {
       console.log("1");
@@ -280,32 +285,39 @@ async function main()
           console.log(`Exécution de la commande : ${ command }`);
           const output = await handleCommandWithRetry(command);
           console.log(`Résultat de la commande : ${ output }`);
-
+          command_input_history.push(command);
+          command_output_history.push(output)
           // Post-exécution
+          /* 
           const postExecutionPrompt = generatePostExecutionPrompt(command, output);
           const postExecutionResponse = await safeQuery(postExecutionPrompt, 'post-exécution');
-          console.log("Post-exécution : " + postExecutionResponse);
+          console.log("Post-exécution : " + postExecutionResponse);*/
         }
         else if(current_step.type === 'analyse')
         {
-          console.log(`Analyse : ${ current_step.contenu }`);
-        }
-        else if(current_step.type === 'modification')
-        {
-          console.log(`Modification : ${ current_step.contenu }`);
+          const lastCommandOutput = command_output_history.at(-1);
+          // ici il faut un prompt lurkuitae qui analyse le dernier output + index + plan + input initial 
         }
         else if(current_step.type === 'attente')
         {
           console.log(`Attente : ${ current_step.contenu }`);
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Simule une attente de 1 seconde
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Simule une attente de 1 seconde ? mais pourquoi
         }
         else if(current_step.type === 'dialogue')
         {
           console.log(`Dialogue : ${ current_step.contenu }`);
+          // ici c'est tout bon on affiche juste le dialogue donc c'est fait.
         }
         else if(current_step.type === 'question')
         {
           console.log(`Question : ${ current_step.contenu }`);
+          // ici il faut qu'on prenne l'input utiliisateur, qu'on le redonne à un prompt de rituel, pour qu'il refasse un rituel mais avec l'historique de celui précédent.
+        }
+        else if(current_step.type === 'réponse')
+        {
+          console.log(`Réponse : ${ current_step.contenu }`);
+          // ici il faut simplement afficher la réponse, donc c'est fait c'est bon.
+          // mais ça doit etre enregistré dans une mémoire qu'on utilisera plus tard, qui contient les inputs, les questioins, les réponses.
         }
 
       }
@@ -314,34 +326,6 @@ async function main()
 
     result["index"]++;
 
-
-    continue;
-
-    fullInputHistory += `\n> ${ input }`;
-    const separationPrompt = generateSeparationPrompt(input)
-
-    logInfo(`Validation : ${ separationPrompt }`);
-    const validityResponse = (await safeQuery(separationPrompt, 'validité')).toLowerCase().trim();
-
-    if(validityResponse.indexOf('terminal') == 0)
-    {
-
-      logInfo(`Réponse du modèle : ${ validityResponse }`);
-      const traductionPrompt = generateTraductionPrompt(input);
-      const traductionResponse = await safeQuery(traductionPrompt, 'traduction');
-      console.log("Traduction : " + traductionResponse);
-
-      const command = traductionResponse.slice(2);
-      console.log(`Commande à exécuter : ${ command }`);
-
-      const output = await handleCommandWithRetry(command);
-      console.log(output);
-
-      const postExecutionPrompt = generatePostExecutionPrompt(input, output);
-      const postExecutionResponse = await safeQuery(postExecutionPrompt, 'post-exécution');
-      console.log("Post-exécution : " + postExecutionResponse);
-
-    }
   }
 
   // ✅ C'est ici qu'on ferme proprement readline
