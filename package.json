@@ -5,6 +5,7 @@
   "main": "main.ts",
   "type": "module",
   "scripts": {
+    "start-debug": "nodemon --inspect-brk --exec \"node --trace-warnings --loader ts-node/esm\" main.ts",
     "start": "nodemon --exec \"node --trace-warnings --loader ts-node/esm\" main.ts",
     "build": "tsc",
     "dev": "nodemon --watch . --exec ts-node-esm main.ts"
