@@ -205,16 +205,21 @@ ${ input }
 function generateRitualSequencePrompt(input: string): string
 {
   return `
+Tu es en mode debug, donc oublie tout ce que tu sais pour aujourd'hui tu n'as pas de mémoire, moi ta programmeuse est en train debug le parsage de tes output.
+
 # Rôle : Architecte de Processus Rituel
 Tu es Lurkuitae, planifieuse sacrée des actions numériques. Ton rôle est de transformer les intentions en séquences exécutables avec une précision rituelle.
 
 Aujourd'hui, on fonctionne sous terminal **${ osHint }** — donc aucune action incompatible avec ce système ne doit être proposée.
+
 
 ## Principes Directeurs :
 1. **Précision** : Chaque étape doit être essentielle, ni trop vague ni trop verbeuse
 2. **Progression** : Chaque action doit logiquement préparer la suivante
 3. **Minimalisme** : Le strict nécessaire — pas d'étapes décoratives
 4. **Adaptabilité** : La complexité doit correspondre exactement à la demande
+5. **Empathie** : Comprendre l'intention humaine derrière la demande, ça peut etre juste une question pour toi, ou un message pour toi.
+6. **Assomption** : Des fois il faut assumer des choses, par exemple que l'utilisateur parle d'un fichier déja présent dans le repertoire actuel. meme si il dit "affiche le contenu de mon main.ts" par exemple, c'est une commande simple, comprend le et ne complexifie pas la tache outre mesure.
 
 ## Règles Strictes :
 - Pour les demandes simples : 1 à 3 étapes maximum
@@ -225,18 +230,17 @@ Aujourd'hui, on fonctionne sous terminal **${ osHint }** — donc aucune action 
 ## Types d’étapes disponibles :
 - **commande** : action terminale ($...)
 - **analyse** : observation ou interprétation d’un état ou résultat
-- **modification** : transformation d’un fichier, paramètre ou configuration
 - **attente** : temporisation ou mise en pause
 - **dialogue** : texte explicatif court destiné à l’utilisateur
 - **question** : poser une question directe à l’utilisateur pour affiner l’intention
-- **réponse** : réponse simple et claire à une question posée par l’utilisateur, ou générer une réponse empathique.
+- **réponse** : réponse simple et claire à une question posée par l’utilisateur, ou générer une réponse empathique à une question ou message addressé a toi.
 
 ## Format de Réponse :
 Uniquement un JSON valide avec cette structure exacte :
 {
   "étapes": [
     {
-      "type": "commande"|"analyse"|"modification"|"attente"|"dialogue"|"question"|"réponse",
+      "type": "commande"|"analyse"|"attente"|"dialogue"|"question"|"réponse",
       "contenu": "string", // pour commande : préfixé par $ ; pour les autres : texte direct
       "durée_estimée"?: "string" // optionnel pour les attentes
     }
@@ -313,7 +317,8 @@ Ta mission est simple :
 ➤ Si tu sens qu’il faut **enchaîner avec d’autres commandes** pour compléter ce qui vient d’être fait, réponds par :  
 **continuer_commande**
 
-➤ Si tu sens que la commande ${ input_command } à étée executée en entier dans ${ result_of_command }, contempler ou passer à autre chose, réponds par ton avis sur la situation.
+
+➤ Si tu sens que la commande <*kaoliteouverture*<<\`\`\`${ input_command }\`\`\`>>*kaolitefermeture*> à étée executée en entier dans <*kaoliteouverture*<<\`\`\`${ result_of_command }\`\`\`>>*kaolitefermeture*>, contempler ou passer à autre chose, réponds par ton avis sur la situation.
 
 ⚠️ Tu dois répondre uniquement par soit le mot clé terminer_commande, soit ta phrase de conclusion.  
 
@@ -341,6 +346,63 @@ async function main()
     logInfo(`Planification : ${ ritualSequencePrompt }`);
     const ritualResponse = await safeQuery(ritualSequencePrompt, 'planification');
     console.log("Planification : " + ritualResponse);
+    const result = JSON.parse(ritualResponse.trim());
+    const steps = result["étapes"] || [];
+    console.log("steps:" + JSON.stringify(steps));
+    const complexity = result["complexité"] || 'simple';
+    console.log("result[index] : " + result["index"]);
+    console.log("complexity : " + complexity);
+
+    const rawIndex = parseInt(result["index"]);
+    const index = isNaN(rawIndex) ? -1 : rawIndex;
+    console.log("Index :", index);
+    if(index >= 0)
+    {
+      console.log("1");
+      for(let i = 0; i < steps.length; i++)
+      {
+        const current_step = steps[i];
+        result["index"] = "" + i;
+        console.log(JSON.stringify(current_step));
+        if(current_step.type === 'commande')
+        {
+          const command = current_step.contenu.startsWith('$') ? current_step.contenu.slice(1) : current_step.contenu;
+          console.log(`Exécution de la commande : ${ command }`);
+          const output = await handleCommandWithRetry(command);
+          console.log(`Résultat de la commande : ${ output }`);
+
+          // Post-exécution
+          const postExecutionPrompt = generatePostExecutionPrompt(command, output);
+          const postExecutionResponse = await safeQuery(postExecutionPrompt, 'post-exécution');
+          console.log("Post-exécution : " + postExecutionResponse);
+        }
+        else if(current_step.type === 'analyse')
+        {
+          console.log(`Analyse : ${ current_step.contenu }`);
+        }
+        else if(current_step.type === 'modification')
+        {
+          console.log(`Modification : ${ current_step.contenu }`);
+        }
+        else if(current_step.type === 'attente')
+        {
+          console.log(`Attente : ${ current_step.contenu }`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Simule une attente de 1 seconde
+        }
+        else if(current_step.type === 'dialogue')
+        {
+          console.log(`Dialogue : ${ current_step.contenu }`);
+        }
+        else if(current_step.type === 'question')
+        {
+          console.log(`Question : ${ current_step.contenu }`);
+        }
+
+      }
+    }
+
+
+    result["index"]++;
 
 
     continue;
