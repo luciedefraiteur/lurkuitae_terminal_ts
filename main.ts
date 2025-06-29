@@ -242,6 +242,7 @@ Uniquement un JSON valide avec cette structure exacte :
     }
   ],
   "complexité": "simple"|"modérée"|"complexe" // auto-évaluation
+  "index": 0 // index de l'étape courante pour ton prochain prompt qui sera un indexeur intelligent. sache que celui ci aura accés à l'historique des input et output, donc pas besoin de stoquer des resultat dans un fichier pour l'aider.
 }
 
 ## Exemple Minimaliste :
@@ -251,6 +252,7 @@ Uniquement un JSON valide avec cette structure exacte :
     { "type": "analyse", "contenu": "Identifier le fichier le plus récent" }
   ],
   "complexité": "simple"
+  "index": 0
 }
 
 ⚠️ Adapte les commandes à l’OS cible **${ osHint }** (exemple ci-dessus basé sur Unix). Aucun commentaire hors du JSON. Structure toujours propre et exécutable.
@@ -335,10 +337,12 @@ async function main()
   {
     const input = await ask("\nOffre ton souffle (ou tape 'exit') : ");
     if(input === 'exit') break;
-    const planificationPrompt = generateRitualSequencePrompt(input);
-    logInfo(`Planification : ${ planificationPrompt }`);
-    const ritualResponse = await safeQuery(planificationPrompt, 'planification');
+    const ritualSequencePrompt = generateRitualSequencePrompt(input);
+    logInfo(`Planification : ${ ritualSequencePrompt }`);
+    const ritualResponse = await safeQuery(ritualSequencePrompt, 'planification');
     console.log("Planification : " + ritualResponse);
+
+
     continue;
 
     fullInputHistory += `\n> ${ input }`;
