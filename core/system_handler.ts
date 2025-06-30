@@ -1,6 +1,8 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { CommandResult } from './types.js';
+import { detectWindowsShell, ShellType } from './utils/shell_detector.js';
+import os from 'os';
 
 const execAsync = promisify(exec);
 
@@ -10,8 +12,20 @@ const execAsync = promisify(exec);
  * @param cwd Le chemin absolu du répertoire depuis lequel exécuter.
  */
 export async function handleSystemCommand(input: string, cwd: string): Promise<CommandResult> {
+  let shell: string | undefined;
+
+  if (os.platform() === 'win32') {
+    const detectedShell = detectWindowsShell();
+    console.log(`Shell Windows détecté : ${detectedShell}`);
+    // Ici, vous pourriez adapter la commande ou le shell d'exécution
+    // en fonction de `detectedShell`.
+    // Par exemple, pour PowerShell, vous pourriez vouloir préfixer les commandes.
+    // Pour l'instant, nous laissons `exec` décider du shell par default.
+    // shell = detectedShell === 'powershell' ? 'powershell.exe' : 'cmd.exe'; // Exemple d'utilisation
+  }
+
   try {
-    const { stdout, stderr } = await execAsync(input, { cwd });
+    const { stdout, stderr } = await execAsync(input, { cwd, shell });
     return {
       success: true,
       stdout: stdout.trim(),

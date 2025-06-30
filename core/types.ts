@@ -17,6 +17,7 @@ export interface RituelContext {
   command_input_history: string[];
   command_output_history: string[];
   current_directory:string;
+  temperatureStatus: 'normal' | 'elevated' | 'critical';
 }
 
 export interface CommandResult {
