@@ -46,14 +46,24 @@ ollama run codellama:7b-instruct
 
 ```
 .
-├── main.ts               # Point d'entrée du terminal
+├── main.ts                      # Point d'entrée pour usage direct
 ├── core/
-│   ├── memory.ts         # Stockage des logs
-│   ├── system_handler.ts # Exécution des commandes shell
-│   └── ollama_interface.ts # Requêtes aux modèles LLM locaux
-├── tsconfig.json
+│   ├── memory.ts                # Stockage des logs
+│   ├── system_handler.ts        # Exécution des commandes shell
+│   ├── ollama_interface.ts      # Interface multi-modèle (Ollama)
+│   ├── ritual_utils.ts          # Fonctions rituelles : planification, exécution
+│   ├── run_terminal_rituel.ts   # Terminal intelligent autonome
+│   ├── prompts/
+│   │   ├── generateRitualSequence.ts
+│   │   └── generateAnalysisPrompt.ts
+│   └── utils/
+│       └── osHint.ts
+├── brainstormed_prompts/        # Idées et fragments de prompts
+│   ├── lurkuitindex.ts
+│   └── postExecPrompt.ts
 ├── package.json
-└── README.md             # Vous y êtes
+├── tsconfig.json
+└── README.md                    # Vous y êtes
 ```
 
 ---
