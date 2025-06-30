@@ -2,8 +2,8 @@ import readline from 'readline';
 import {handleSystemCommand} from './core/system_handler.js';
 import {Memory} from './core/memory.js';
 import {OllamaInterface} from './core/ollama_interface.js';
-import {generateRitualSequencePrompt, PlanRituel} from './current_prompts/generateRitualSequence.js';
-import {generateAnalysisPrompt} from "./current_prompts/generateAnalysisPrompt.js";
+import {generateRitualSequencePrompt, PlanRituel} from './core/prompts/generateRitualSequence.js';
+import {generateAnalysisPrompt} from "./core/prompts/generateAnalysisPrompt.js";
 let debug = true;
 let fullLogTrace = '';
 
