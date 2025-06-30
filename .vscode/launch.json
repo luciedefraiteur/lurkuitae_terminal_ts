@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Lurkuitae Terminal - TS ESM",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--trace-warnings",
+        "--loader",
+        "ts-node/esm"
+      ],
+      "args": [
+        "${workspaceFolder}/main.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    }
+  ]
+}
