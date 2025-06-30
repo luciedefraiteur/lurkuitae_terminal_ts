@@ -1,13 +1,9 @@
 import {handleSystemCommand} from './system_handler.js';
 import {OllamaInterface} from './ollama_interface.js';
-import {generateRitualSequencePrompt, PlanRituel} from './prompts/generateRitualSequence.js';
+import {generateRitualSequencePrompt} from './prompts/generateRitualSequence.js';
 import {generateAnalysisPrompt} from './prompts/generateAnalysisPrompt.js';
+import {type RituelContext, type PlanRituel } from "./types.js"
 
-export interface RituelContext {
-  historique: { input: string; plan: PlanRituel }[];
-  command_input_history: string[];
-  command_output_history: string[];
-}
 
 export function getContexteInitial(): RituelContext {
   return {

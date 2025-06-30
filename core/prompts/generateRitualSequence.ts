@@ -1,18 +1,6 @@
 import {osHint} from "../utils/osHint.js";
+import { type PlanRituel } from "../types.js";
 
-export interface Étape
-{
-    type: 'commande' | 'analyse' | 'attente' | 'dialogue' | 'question' | 'réponse';
-    contenu: string;
-    durée_estimée?: string;
-}
-
-export interface PlanRituel
-{
-    étapes: Étape[];
-    complexité: 'simple' | 'modérée' | 'complexe';
-    index: number;
-}
 export function generateRitualSequencePrompt(
     input: string,
     planPrecedent?: PlanRituel,

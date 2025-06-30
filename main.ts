@@ -1,169 +1,75 @@
 import readline from 'readline';
-import {handleSystemCommand} from './core/system_handler.js';
-import {Memory} from './core/memory.js';
-import {OllamaInterface} from './core/ollama_interface.js';
-import {generateRitualSequencePrompt, PlanRituel} from './core/prompts/generateRitualSequence.js';
-import {generateAnalysisPrompt} from "./core/prompts/generateAnalysisPrompt.js";
-let debug = true;
-let fullLogTrace = '';
+import { generateRituel, executeRituelPlan, getContexteInitial } from './core/ritual_utils.js';
 
-function appendToFullLog(tag: string, message: string)
-{
-  const logLine = `[${ tag }] ${ message }\n`;
-  fullLogTrace += logLine;
-  if(debug || tag !== 'DEBUG')
-  {
-    console.log(logLine);
-  }
-}
+import {
+  RituelContext
+} from "./core/types.js";
 
-function logInfo(message: string)
-{
-  appendToFullLog('INFO', message);
-}
-
-async function safeQuery(prompt: string, label: string): Promise<string>
-{
-  let response = '';
-  let attempts = 0;
-
-  while(!response && attempts < 3)
-  {
-    response = await OllamaInterface.query(prompt);
-    await new Promise((r) => setTimeout(r, 1));
-    attempts++;
-    logInfo(`Tentative ${ attempts } - ${ label } : ${ response }`);
-  }
-
-  if(!response)
-  {
-    logInfo(`Échec permanent du modèle pour : ${ label }`);
-    response = `Échec de la génération pour : ${ label }. Veuillez réessayer plus tard.`;
-  }
-
-  return response;
-}
-
-const rl = readline.createInterface({input: process.stdin, output: process.stdout});
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 const ask = (q: string) => new Promise<string>((res) => rl.question(q, res));
 
-export async function main()
-{
+export async function main() {
   console.log('☽ LURKUITAE ☾ Terminal Codex Vivant ☾');
-  await boucleRituelle(getContexteInitial());
+  const context = getContexteInitial();
+  await boucleRituelle(context);
 }
 
-interface RituelContext
-{
-  historique: {input: string; plan: PlanRituel}[];
-  command_input_history: string[];
-  command_output_history: string[];
-}
-
-function getContexteInitial(): RituelContext
-{
-  return {
-    historique: [],
-    command_input_history: [],
-    command_output_history: [],
-  };
-}
-
-async function boucleRituelle(context: RituelContext): Promise<void>
-{
+async function boucleRituelle(context: RituelContext): Promise<void> {
   const input = await ask("\nOffre ton souffle (ou tape 'exit') : ");
-  if(input === 'exit')
-  {
+  if (input === 'exit') {
     rl.close();
     return;
   }
 
-  const planPrecedent = context.historique.at(-1)?.plan;
-  const indexPrecedent = planPrecedent?.index ?? undefined;
+  const plan = await generateRituel(input, context);
+  if (!plan) {
+    console.log("⚠️ Échec de génération du plan. Essaie encore.");
+    return await boucleRituelle(context);
+  }
 
-  const ritualPrompt = generateRitualSequencePrompt(input, planPrecedent, indexPrecedent);
-  const ritualResponse = await safeQuery(ritualPrompt, 'planification');
-  const plan: PlanRituel = JSON.parse(ritualResponse.trim());
+  context.historique.push({ input, plan });
 
-  context.historique.push({input, plan});
+  const resultats = await executeRituelPlan(plan, context);
 
-  await executerPlan(plan, context);
-  await boucleRituelle(context); // récursivité infinie sacrée
-}
+  for (const res of resultats) {
+    const { étape, index, output, analysis, waited, text } = res;
 
-async function executerPlan(plan: PlanRituel, context: RituelContext)
-{
-  for(let i = 0; i < plan.étapes.length; i++)
-  {
-    const étape = plan.étapes[i];
-    console.log(`\n→ Étape ${ i + 1 }/${ plan.étapes.length } : ${ étape.type }`);
+    console.log(`\n→ Étape ${index + 1} : ${étape.type}`);
+    if (étape.type === 'commande' && output) {
+      console.log(`Exécution : ${étape.contenu}`);
+      console.log(`→ Résultat :\n${output}`);
+    }
 
-    switch(étape.type)
-    {
-      case 'commande': {
-        const cmd = étape.contenu.startsWith('$') ? étape.contenu.slice(1) : étape.contenu;
-        console.log(`Exécution : ${ cmd }`);
-        const output = await handleSystemCommand(cmd);
-        console.log(`→ Résultat :\n${ output }`);
-        context.command_input_history.push(cmd);
-        context.command_output_history.push(output);
+    if (étape.type === 'analyse' && analysis) {
+      console.log(`→ Analyse : ${analysis}`);
+    }
 
-        break;
-      }
+    if (étape.type === 'attente' && waited) {
+      console.log(`⏳ Attente ${waited} ms : ${étape.contenu}`);
+    }
 
-      case 'analyse': {
-        const output = context.command_output_history.at(-1) || '';
-        const prompt = generateAnalysisPrompt({
-          output,
-          index: i,
-          plan,
-          original_input: context.historique.at(-1)?.input || ''
-        });
-        const result = await safeQuery(prompt, 'analyse');
-        console.log(`→ Analyse : ${ result }`);
-        break;
-        /* ensuite on doit simplement relancer le rituel avec des arguments sépciaux encore une fois, contenant, le plan en cours, 
-          les actions effectuées dans le plan et leur resultat a chaque fois, meme les questions et réponses,
-          dans un json
-          { 
-            inputInitialUTilisateur,
-            planEnCours mais détaillé avec chaque réponse aux questions, et chaque output de commande, et chaque resultat d'analyse précédentes.
+    if (['dialogue', 'réponse'].includes(étape.type) && text) {
+      console.log(`💬 ${text}`);
+    }
 
-          }
-
-        */
-      }
-
-      case 'attente': {
-        const ms = parseInt(étape.durée_estimée || '2000');
-        console.log(`Attente ${ ms }ms : ${ étape.contenu }`);
-        await new Promise(resolve => setTimeout(resolve, ms));
-        break;
-      }
-
-      case 'dialogue': {
-        console.log(`🗣️ ${ étape.contenu }`);
-        break;
-      }
-
-      case 'question': {
-        console.log(`❓ ${ étape.contenu }`);
-        const userInput = await ask('↳ Réponse : ');
-        const prompt = generateRitualSequencePrompt(userInput, plan, i);
-        const newResponse = await safeQuery(prompt, 'réitération');
-        const newPlan: PlanRituel = JSON.parse(newResponse.trim());
-        await executerPlan(newPlan, context);
-        break;
-      }
-
-      case 'réponse': {
-        console.log(`💬 ${ étape.contenu }`);
-        break;
+    if (étape.type === 'question') {
+      console.log(`❓ ${étape.contenu}`);
+      const userInput = await ask('↳ Réponse : ');
+      const subPlan = await generateRituel(userInput, context);
+      if (subPlan) {
+        context.historique.push({ input: userInput, plan: subPlan });
+        const subResultats = await executeRituelPlan(subPlan, context);
+        for (const subRes of subResultats) {
+          console.log(`→ ${subRes.étape.type} (${subRes.index}) → ${subRes.output || subRes.analysis || subRes.text || ''}`);
+        }
       }
     }
   }
+
+  await boucleRituelle(context);
 }
-
-
-
-main().catch(console.error);
+try {
+  main();
+} catch (err) {
+  console.error("[ERREUR FATALE]", err);
+}

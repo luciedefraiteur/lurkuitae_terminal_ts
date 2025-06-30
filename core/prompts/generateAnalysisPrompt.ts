@@ -1,4 +1,4 @@
-import {PlanRituel} from "./generateRitualSequence.js";
+import {PlanRituel} from "../types.js";
 
 export function generateAnalysisPrompt({output, index, plan, original_input}: {
     output: string,
