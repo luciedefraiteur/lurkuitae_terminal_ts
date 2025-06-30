@@ -6,6 +6,10 @@ import {generateErrorRemediationPrompt} from './prompts/generateErrorRemediation
 import {type RituelContext, type PlanRituel, CommandResult } from "./types.js"
 import path from 'path';
 import fs from 'fs';
+import readline from 'readline';
+
+const rl = readline.createInterface({input: process.stdin, output: process.stdout});
+const ask = (q: string) => new Promise<string>((res) => rl.question(q, res));
 
 export function getContexteInitial(): RituelContext {
   return {
@@ -133,6 +137,52 @@ export async function executeRituelPlan(plan: PlanRituel, context: RituelContext
       case 'question':
       case 'réponse': {
         result.text = étape.contenu;
+        break;
+      }
+
+      case 'vérification_pré_exécution': {
+        const checkType = étape.contenu.split(' ')[0];
+        const checkValue = étape.contenu.split(' ').slice(1).join(' ');
+        let checkPassed = false;
+
+        if (checkType === 'fichier_existe') {
+          const fullPath = path.resolve(context.current_directory, checkValue);
+          checkPassed = fs.existsSync(fullPath);
+          result.output = checkPassed ? `[OK] Fichier existe : ${fullPath}` : `[ERREUR] Fichier non trouvé : ${fullPath}`;
+        } else if (checkType === 'commande_disponible') {
+          try {
+            await handleSystemCommand(checkValue + ' --version', context.current_directory);
+            checkPassed = true;
+            result.output = `[OK] Commande disponible : ${checkValue}`;
+          } catch (e) {
+            checkPassed = false;
+            result.output = `[ERREUR] Commande non disponible : ${checkValue}`;
+          }
+        }
+
+        result.success = checkPassed;
+        if (!checkPassed) {
+          console.error(`[ERREUR VÉRIFICATION] ${étape.contenu} a échoué.`);
+          // Optionally trigger remediation here as well
+        }
+        break;
+      }
+
+      case 'confirmation_utilisateur': {
+        const confirmation = await ask(`${étape.contenu} (oui/non) : `);
+        result.confirmed = confirmation.toLowerCase() === 'oui';
+        result.output = result.confirmed ? "[OK] Confirmation reçue." : "[ANNULÉ] Action non confirmée.";
+        if (!result.confirmed) {
+          console.warn("[ANNULATION] Action annulée par l'utilisateur.");
+          // Potentially break the ritual execution or trigger remediation
+        }
+        break;
+      }
+
+      case 'génération_code': {
+        console.log(`[INFO] Intention de génération de code : ${étape.contenu}`);
+        result.output = `[INFO] Demande de génération de code enregistrée : ${étape.contenu}`;
+        // In a real scenario, this would trigger a code generation module
         break;
       }
     }

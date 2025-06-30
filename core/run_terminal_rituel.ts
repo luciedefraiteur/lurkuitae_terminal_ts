@@ -1,9 +1,6 @@
-import readline from 'readline';
 import {generateRituel, executeRituelPlan} from './ritual_utils.js';
 import {RituelContext} from './types.js';
-
-const rl = readline.createInterface({input: process.stdin, output: process.stdout});
-const ask = (q: string) => new Promise<string>((res) => rl.question(q, res));
+import * as readline from 'readline';
 
 // ANSI escape codes for colors
 const Colors = {
@@ -39,20 +36,35 @@ function colorize(text: string, color: string): string
   return `${ color }${ text }${ Colors.Reset }`;
 }
 
-export async function runTerminalRituel(context: RituelContext): Promise<void>
-{
-  const input = await ask(colorize("\nOffre ton souffle (ou tape 'exit') : ", Colors.FgCyan));
-  if(input === 'exit')
-  {
-    rl.close();
-    return;
+export async function runTerminalRituel(context: RituelContext, rl: readline.Interface, ask: (q: string) => Promise<string>, testInputs?: string[]): Promise<boolean> {
+  let input: string | undefined;
+
+  if (testInputs && testInputs.length > 0) {
+    input = testInputs.shift();
+    if (input === undefined) {
+      return false; // No more test inputs, stop recursion
+    }
+    console.log(colorize(`\nOffre ton souffle (ou tape 'exit') : ${input}`, Colors.FgCyan)); // Log the simulated input
+  } else {
+    input = await ask(colorize("\nOffre ton souffle (ou tape 'exit') : ", Colors.FgCyan));
+  }
+
+  if (input === 'exit') {
+    return false; // User wants to exit
+  }
+
+  // Ensure input is a string before proceeding
+  if (input === undefined) {
+    console.error("Erreur: L'entrée est indéfinie.");
+    return false; // Should not happen with current logic, but for safety
   }
 
   const plan = await generateRituel(input, context);
+
   if(!plan)
   {
     console.log(colorize("⚠️ Échec de génération du plan. Essaie encore.", Colors.FgRed));
-    return await runTerminalRituel(context);
+    return await runTerminalRituel(context, rl, ask, testInputs); // Retry with same context and remaining test inputs
   }
 
   context.historique.push({input, plan});
@@ -107,5 +119,6 @@ export async function runTerminalRituel(context: RituelContext): Promise<void>
     }
   }
 
-  await runTerminalRituel(context); // récursion sacrée
+  return await runTerminalRituel(context, rl, ask, testInputs); // Continue recursion
 }
+
