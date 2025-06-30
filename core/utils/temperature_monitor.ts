@@ -35,7 +35,7 @@ export async function checkSystemTemperature(context: RituelContext): Promise<vo
 
   if (rand < 0.7) {
     newTemperatureStatus = 'normal';
-  } else if (rand < 0.9) {
+  } else if (rand < 0.8) {
     newTemperatureStatus = 'elevated';
   } else {
     newTemperatureStatus = 'critical';
@@ -57,7 +57,7 @@ ${waitMessage}
     console.log(colorize(`
 ${waitMessage}
 `, Colors.FgBlue));
-    await new Promise(resolve => setTimeout(resolve, 15000)); // Attente de 15 secondes
+    await new Promise(resolve => setTimeout(resolve, 90000)); // Attente de 90 secondes (1.5 minutes)
     console.log(colorize("✅ Le système est prêt à reprendre le rituel.", Colors.FgBlue));
   }
 }
