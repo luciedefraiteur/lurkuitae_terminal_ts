@@ -19,7 +19,7 @@ try {
     "show me the content of index.html",
     "exit"
   ];
-  await runTerminalRituel(context, rl, ask, testInputs);
+  await runTerminalRituel(context, rl, ask);
 } catch (err) {
   console.error("[ERREUR FATALE]", err);
 } finally {
