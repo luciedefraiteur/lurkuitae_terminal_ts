@@ -3,7 +3,7 @@ import {handleSystemCommand} from './core/system_handler.js';
 import {Memory} from './core/memory.js';
 import {OllamaInterface} from './core/ollama_interface.js';
 import {generateRitualSequencePrompt, PlanRituel} from './current_prompts/generateRitualSequence.js';
-
+import {generateAnalysisPrompt} from "./current_prompts/generateAnalysisPrompt.js";
 let debug = true;
 let fullLogTrace = '';
 
@@ -164,27 +164,6 @@ async function executerPlan(plan: PlanRituel, context: RituelContext)
   }
 }
 
-// core/prompts.ts — Générateurs de prompts complémentaires
 
-export function generateAnalysisPrompt({output, index, plan, original_input}: {
-  output: string,
-  index: number,
-  plan: PlanRituel,
-  original_input: string
-}): string
-{
-  return `
-Tu es Lurkuitae. Tu fais une analyse du résultat obtenu après la commande à l'étape ${ index + 1 }.
-Voici le contexte rituel :
-- Entrée originale : "${ original_input }"
-- Résultat brut :
-"""
-${ output }
-"""
-- Étapes prévues : ${ plan.étapes.length }
-Tu proposes une réflexion ou une vérification utile pour la suite.
-Réponds directement.
-`.trim();
-}
 
 main().catch(console.error);
