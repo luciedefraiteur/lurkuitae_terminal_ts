@@ -1,5 +1,7 @@
 import {spawn} from 'child_process';
 import os from 'os';
+import { RituelContext } from './types.js';
+import { generateWaitMessagePrompt } from './prompts/generateWaitMessagePrompt.js';
 
 export enum OllamaModel
 {
@@ -12,7 +14,7 @@ function escapeJson(input: string): string
 {
   return input
     .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\"')
+    .replace(/"/g, '\"')
     .replace(/\n/g, '\\n')
     .replace(/\r/g, '\\r')
     .replace(/\t/g, '\\t');
@@ -120,5 +122,10 @@ export class OllamaInterface
         child.stdin.end();
       });
     }
+  }
+
+  static async generateWaitMessage(context: RituelContext): Promise<string> {
+    const prompt = generateWaitMessagePrompt(context);
+    return this.query(prompt);
   }
 }
