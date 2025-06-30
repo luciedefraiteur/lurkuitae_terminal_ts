@@ -9,10 +9,10 @@ import {
   getContexteInitial,
   safeQuery,
   executeRituelPlan,
-  RituelContext,
-  PlanRituel,
   generateRituel
 } from './core/ritual_utils.js';
+import { RituelContext, PlanRituel } from './core/types.js';
+import { Request, Response } from 'express';
 
 const app = express();
 const port = process.env.PORT || 3030;
@@ -22,7 +22,7 @@ app.use(bodyParser.json());
 
 const context: RituelContext = getContexteInitial();
 
-app.post('/rituel', async (req, res) => {
+app.post('/rituel', async (req: express.Request, res: express.Response) => {
   const input = req.body.input;
   if (!input) return res.status(400).json({error: 'Input manquant'});
 
@@ -33,7 +33,7 @@ app.post('/rituel', async (req, res) => {
   res.json({plan});
 });
 
-app.post('/execute', async (req, res) => {
+app.post('/execute', async (req: express.Request, res: express.Response) => {
   const plan: PlanRituel = req.body.plan;
   const resultats = await executeRituelPlan(plan, context);
   res.json({resultats});

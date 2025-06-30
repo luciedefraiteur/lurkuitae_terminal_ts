@@ -1,4 +1,5 @@
 import {osHint} from "../utils/osHint.js";
+import {OSContext} from "../utils/osHint.js";
 import {type PlanRituel} from "../types.js";
 
 export function generateRitualSequencePrompt(
@@ -7,6 +8,32 @@ export function generateRitualSequencePrompt(
   indexCourant?: number
 ): string
 {
+
+  const exemple = osHint == OSContext.Windows ?
+    `{
+  "étapes": [
+    { "type": "commande", "contenu": "$dir" },
+    { "type": "analyse", "contenu": "Identifier le fichier main.ts" },
+    { "type": "commande", "contenu": "$type main.ts" }
+  ],
+  "contexte": terminal ${ OSContext.Windows },
+  "complexité": "simple",
+  "index": 0
+}` :
+    `
+{
+  "étapes": [
+    { "type": "commande", "contenu": "$ls -l" },
+    { "type": "analyse", "contenu": "Repérer le fichier main.ts" },
+    { "type": "commande", "contenu": "$cat main.ts" }
+  ],
+  "contexte": terminal ${ OSContext.Unix }
+  "complexité": "simple",
+  "index": 0
+}
+`
+
+
   const contexteRituel = planPrecedent && indexCourant !== undefined
     ? `
 ## CONTEXTE RITUEL :
@@ -68,21 +95,13 @@ Uniquement un JSON valide avec cette structure exacte :
       "durée_estimée"?: "string"
     }
   ],
+  "contexte" : "${ OSContext.Windows }" | "${ OSContext.Unix }"
   "complexité": "simple"|"modérée"|"complexe",
   "index": 0
 }
 
-## Exemple Minimaliste :
-{
-  "étapes": [
-    { "type": "commande", "contenu": "$ls -l" },
-    { "type": "analyse", "contenu": "Identifier le fichier le plus récent" },
-    { "type": "changer_dossier", "contenu": ".."}
-  
-  ],
-  "complexité": "simple",
-  "index": 0
-}
+## Exemple Minimaliste relatif à notre os ${ OSContext.Windows } :
+${ exemple }
 
 ## Attention :
 - Pas de virgule superflue dans les tableaux ou objets JSON

@@ -1,8 +1,9 @@
 import {handleSystemCommand} from './system_handler.js';
 import {OllamaInterface} from './ollama_interface.js';
-import {generateRitualSequencePrompt} from './prompts/generateRitualSequence.js';
+import {generateRitualSequencePrompt} from './prompts/generateRitualSequence.js'; // Corrected import
 import {generateAnalysisPrompt} from './prompts/generateAnalysisPrompt.js';
-import {type RituelContext, type PlanRituel } from "./types.js"
+import {generateErrorRemediationPrompt} from './prompts/generateErrorRemediationPrompt.js';
+import {type RituelContext, type PlanRituel, CommandResult } from "./types.js"
 import path from 'path';
 import fs from 'fs';
 
@@ -47,7 +48,7 @@ export async function generateRituel(input: string, context: RituelContext): Pro
   }
 }
 
-export async function executeRituelPlan(plan: PlanRituel, context: RituelContext): Promise<any[]> {
+export async function executeRituelPlan(plan: PlanRituel, context: RituelContext): Promise<any[]> { // Corrected function name
   const resultats: any[] = [];
 
   for (let i = 0; i < plan.étapes.length; i++) {
@@ -68,10 +69,43 @@ export async function executeRituelPlan(plan: PlanRituel, context: RituelContext
       }
       case 'commande': {
         const cmd = étape.contenu.startsWith('$') ? étape.contenu.slice(1) : étape.contenu;
-        const output = await handleSystemCommand(cmd, context.current_directory);
+        const commandResult: CommandResult = await handleSystemCommand(cmd, context.current_directory); // Explicitly type commandResult
         context.command_input_history.push(cmd);
-        context.command_output_history.push(output);
-        result.output = output;
+        context.command_output_history.push(commandResult.stdout);
+        result.output = commandResult.stdout;
+        result.stderr = commandResult.stderr;
+        result.exitCode = commandResult.exitCode;
+        result.success = commandResult.success;
+
+        if (!commandResult.success) {
+          console.error(`[ERREUR COMMANDE] ${cmd} a échoué avec le code ${commandResult.exitCode}.`);
+          if (commandResult.stderr) {
+            console.error(`Stderr: ${commandResult.stderr}`);
+          }
+
+          const remediationPrompt = generateErrorRemediationPrompt({
+            command: cmd,
+            commandResult: commandResult,
+            contextHistory: context.historique,
+            originalInput: context.historique.at(-1)?.input || '',
+            currentPlan: plan
+          });
+
+          const remediationPlan = await safeQuery(remediationPrompt, 'remédiation');
+          try {
+            const parsedRemediationPlan: PlanRituel = JSON.parse(remediationPlan.trim());
+            console.log("[INFO] Exécution du sous-rituel de remédiation...");
+            const remediationResults = await executeRituelPlan(parsedRemediationPlan, context);
+            result.remediationResults = remediationResults;
+          } catch (e: unknown) {
+            let errorMessage = "An unknown error occurred during remediation plan parsing.";
+            if (e instanceof Error) {
+              errorMessage = e.message;
+            }
+            console.error("[ERREUR] Échec du parsing du plan de remédiation :", errorMessage);
+            result.remediationError = errorMessage;
+          }
+        }
         break;
       }
 

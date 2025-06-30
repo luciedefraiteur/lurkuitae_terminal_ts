@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
+    "module": "NodeNext",
     "target": "ES2022",
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
@@ -8,5 +8,6 @@
     "outDir": "dist",
     "strict": true
   },
-  "include": ["*.ts", "core/**/*.ts"]
+  "include": ["*.ts", "core/**/*.ts"],
+  "exclude": ["server.ts"]
 }
