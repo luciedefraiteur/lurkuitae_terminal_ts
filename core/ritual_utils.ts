@@ -3,13 +3,15 @@ import {OllamaInterface} from './ollama_interface.js';
 import {generateRitualSequencePrompt} from './prompts/generateRitualSequence.js';
 import {generateAnalysisPrompt} from './prompts/generateAnalysisPrompt.js';
 import {type RituelContext, type PlanRituel } from "./types.js"
-
+import path from 'path';
+import fs from 'fs';
 
 export function getContexteInitial(): RituelContext {
   return {
     historique: [],
     command_input_history: [],
     command_output_history: [],
+    current_directory: process.cwd()
   };
 }
 
@@ -53,9 +55,20 @@ export async function executeRituelPlan(plan: PlanRituel, context: RituelContext
     const result: any = { étape, index: i };
 
     switch (étape.type) {
+
+      case 'changer_dossier': {
+        const newDir = path.resolve(context.current_directory || process.cwd(), étape.contenu);
+        if (fs.existsSync(newDir) && fs.statSync(newDir).isDirectory()) {
+          context.current_directory = newDir;
+          result.output = `[OK] Répertoire changé vers ${newDir}`;
+        } else {
+          result.output = `[ERREUR] Dossier non trouvé : ${newDir}`;
+        }
+        break;
+      }
       case 'commande': {
         const cmd = étape.contenu.startsWith('$') ? étape.contenu.slice(1) : étape.contenu;
-        const output = await handleSystemCommand(cmd);
+        const output = await handleSystemCommand(cmd, context.current_directory);
         context.command_input_history.push(cmd);
         context.command_output_history.push(output);
         result.output = output;

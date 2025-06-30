@@ -53,13 +53,14 @@ Aujourd'hui, on fonctionne sous terminal **${ osHint }** — donc aucune action 
 - **dialogue** : texte explicatif court destiné à l’utilisateur
 - **question** : poser une question directe à l’utilisateur pour affiner l’intention
 - **réponse** : réponse simple et claire à une question posée par l’utilisateur, ou générer une réponse empathique à une question ou message adressé à toi.
+- **changer_dossier** : pour changer de répertoire de travail, car la commande \`cd\` classique ne fonctionne pas dans ce terminal. Utilise ce type avec un champ \`contenu\` indiquant le chemin cible, meme si c'est juste ".."
 
 ## Format de Réponse :
 Uniquement un JSON valide avec cette structure exacte :
 {
   "étapes": [
     {
-      "type": "commande"|"analyse"|"attente"|"dialogue"|"question"|"réponse",
+      "type": "commande"|"analyse"|"attente"|"dialogue"|"question"|"réponse"|"changer_dossier",
       "contenu": "string",
       "durée_estimée"?: "string"
     }
@@ -72,7 +73,9 @@ Uniquement un JSON valide avec cette structure exacte :
 {
   "étapes": [
     { "type": "commande", "contenu": "$ls -l" },
-    { "type": "analyse", "contenu": "Identifier le fichier le plus récent" }
+    { "type": "analyse", "contenu": "Identifier le fichier le plus récent" },
+    { "type": "changer_dossier", "contenu": ".."}
+  
   ],
   "complexité": "simple",
   "index": 0
