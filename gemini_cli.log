@@ -1,6 +1,5 @@
 Plan actuel:
-1. Modifier `core/ollama_auto_correction.test.ts` pour initialiser `chantModeEnabled` dans `RituelContext`. (Terminé)
-2. Modifier `core/ritual_utils.ts` pour initialiser `chantModeEnabled` dans `RituelContext`. (Terminé)
-3. Compiler le projet à nouveau pour vérifier la correction. (Terminé)
+1. Modifier `core/run_terminal_rituel.ts` pour caster l'objet `error` en `Error` dans le bloc `catch`. (Terminé)
+2. Compiler le projet à nouveau pour vérifier la correction. (Terminé)
 
 Toutes les étapes du plan sont terminées.

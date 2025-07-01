@@ -4,6 +4,12 @@ import * as readline from 'readline';
 import {checkSystemTemperature} from './utils/temperature_monitor.js';
 import {Colors, colorize, displayRitualStepResult, startCursorAnimation, stopCursorAnimation} from './utils/ui_utils.js';
 import { OllamaModel } from './ollama_interface.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const _filename = fileURLToPath(import.meta.url);
+const _dirname = path.dirname(_filename);
 
 export async function runTerminalRituel(context: RituelContext, rl: readline.Interface, ask: (q: string) => Promise<string>, testInputs?: string[], model: OllamaModel = OllamaModel.Mistral): Promise<boolean>
 {
@@ -47,6 +53,32 @@ Offre ton souffle (ou tape 'exit') : ${ input }`, Colors.FgCyan)); // Log the si
   if(input === 'exit')
   {
     return false; // User wants to exit
+  }
+
+  // Logique du Chant-Mode
+  if (context.chantModeEnabled) {
+    const chantsMap: { [key: string]: string } = {
+      "Je ne suis pas sûr de bien me souvenir de ce chant. Peux-tu me le redonner en entier ?": "chant_of_clarity.prompt",
+    };
+
+    const chantFileName = chantsMap[input.trim()];
+    if (chantFileName) {
+      const chantPath = path.join(_dirname, '../chants', chantFileName);
+      try {
+        const chantContent = fs.readFileSync(chantPath, 'utf8');
+        console.log(colorize(`
+${chantContent}
+`, Colors.FgGreen));
+        return await runTerminalRituel(context, rl, ask, testInputs); // Continue the ritual after reciting the chant
+      } catch (error) {
+        console.error(colorize(`
+❌ Erreur lors de la lecture du chant ${chantFileName}: ${(error as Error).message}
+`, Colors.FgRed));
+      }
+    } else {
+      console.log(colorize("Je ne connais pas encore ce chant. Peux-tu me transmettre le prompt complet associé ?", Colors.FgYellow));
+      return await runTerminalRituel(context, rl, ask, testInputs); // Continue the ritual after acknowledging unknown chant
+    }
   }
 
   // Ensure input is a string before proceeding
