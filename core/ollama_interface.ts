@@ -29,7 +29,7 @@ function extractBetweenMarkers(input: string): string
 
 export class OllamaInterface
 {
-  static async query(prompt: string, model: OllamaModel = OllamaModel.Mistral): Promise<string>
+  static async query(prompt: string, model: OllamaModel = OllamaModel.Mistral, _fetch: typeof fetch = fetch): Promise<string>
   {
     const isWindows = os.platform() === 'win32';
     const cleanPrompt = escapeJson(prompt);
@@ -45,7 +45,7 @@ export class OllamaInterface
           stream: false
         };
 
-        const response = await fetch('http://127.0.0.1:11434/api/generate', {
+        const response = await _fetch('http://127.0.0.1:11434/api/generate', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(body)
