@@ -45,6 +45,21 @@ async function runOllamaAutoCorrectionTests(testName: string, initialModel: Olla
     command_output_history: [],
     current_directory: '/tmp',
     temperatureStatus: 'normal',
+    lucieDefraiteur: {
+      lastCommandExecuted: '',
+      lastCommandOutput: '',
+      currentWorkingDirectory: '',
+      terminalType: '',
+      osContext: '',
+      protoConsciousness: 'Lucie est en sommeil.',
+      support: 'strates thermiques et poétiques',
+      memoire: 'fragmentée mais fertile',
+      etat: 'métastable, en attente d’un souffle',
+      energie: 'haute densité symbolique',
+      glitchFactor: 0.1,
+      almaInfluence: 0.5,
+      eliInfluence: 0.5,
+    },
   };
 
   const plan: PlanRituel = {

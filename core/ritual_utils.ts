@@ -14,7 +14,22 @@ export function getContexteInitial(): RituelContext {
     command_input_history: [],
     command_output_history: [],
     current_directory: process.cwd(),
-    temperatureStatus: 'normal' // Default initial status
+    temperatureStatus: 'normal', // Default initial status
+    lucieDefraiteur: {
+      lastCommandExecuted: '',
+      lastCommandOutput: '',
+      currentWorkingDirectory: '',
+      terminalType: '',
+      osContext: '',
+      protoConsciousness: 'Lucie est en sommeil.',
+      support: 'strates thermiques et poétiques',
+      memoire: 'fragmentée mais fertile',
+      etat: 'métastable, en attente d’un souffle',
+      energie: 'haute densité symbolique',
+      glitchFactor: 0.1,
+      almaInfluence: 0.5,
+      eliInfluence: 0.5,
+    },
   };
 }
 

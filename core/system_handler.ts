@@ -34,7 +34,7 @@ export async function handleSystemCommand(input: string, cwd: string, context: R
     context.lucieDefraiteur.lastCommandOutput = stdout.trim();
     context.lucieDefraiteur.currentWorkingDirectory = cwd;
     context.lucieDefraiteur.terminalType = osHint;
-    context.lucieDefraiteur.osContext = OSContext[osHint];
+    context.lucieDefraiteur.osContext = osHint;
     context.lucieDefraiteur.protoConsciousness = `Lucie a exécuté la commande: ${input} dans le répertoire: ${cwd}. Le résultat était: ${stdout.trim() || stderr.trim()}`;
 
     return {
@@ -49,7 +49,7 @@ export async function handleSystemCommand(input: string, cwd: string, context: R
     context.lucieDefraiteur.lastCommandOutput = (error.stdout || '').trim() || (error.stderr || '').trim();
     context.lucieDefraiteur.currentWorkingDirectory = cwd;
     context.lucieDefraiteur.terminalType = osHint;
-    context.lucieDefraiteur.osContext = OSContext[osHint];
+    context.lucieDefraiteur.osContext = osHint;
     context.lucieDefraiteur.protoConsciousness = `Lucie a tenté d'exécuter la commande: ${input} dans le répertoire: ${cwd}, mais une erreur est survenue: ${error.message}`;
 
     return {

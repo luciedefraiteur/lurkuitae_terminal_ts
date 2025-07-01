@@ -21,7 +21,7 @@ export async function handleChangerDossier(étape: Étape, context: RituelContex
 export async function handleCommande(étape: Étape, context: RituelContext, plan: PlanRituel): Promise<any> {
   const result: any = { étape, index: -1 }; // Index will be set by executeRituelPlan
   const cmd = étape.contenu.startsWith('$') ? étape.contenu.slice(1) : étape.contenu;
-  const commandResult: CommandResult = await handleSystemCommand(cmd, context.current_directory);
+  const commandResult: CommandResult = await handleSystemCommand(cmd, context.current_directory, context);
   context.command_input_history.push(cmd);
   context.command_output_history.push(commandResult.stdout);
   result.output = commandResult.stdout;
@@ -132,7 +132,7 @@ export async function handleVerificationPreExecution(étape: Étape, context: Ri
     result.output = checkPassed ? `[OK] Fichier existe : ${fullPath}` : `[ERREUR] Fichier non trouvé : ${fullPath}`;
   } else if (checkType === 'commande_disponible') {
     try {
-      await handleSystemCommand(checkValue + ' --version', context.current_directory);
+      await handleSystemCommand(checkValue + ' --version', context.current_directory, context);
       checkPassed = true;
       result.output = `[OK] Commande disponible : ${checkValue}`;
     } catch (e) {
