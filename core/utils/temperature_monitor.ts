@@ -16,9 +16,9 @@ export async function checkSystemTemperature(context: RituelContext): Promise<vo
   if (temperature === null) {
     console.log(colorize("⚠️ Impossible de lire la température du CPU. Poursuite sans surveillance thermique.", Colors.FgYellow));
     newTemperatureStatus = 'normal'; // Assume normal if cannot read
-  } else if (temperature <= 60) {
+  } else if (temperature <= 55) {
     newTemperatureStatus = 'normal';
-  } else if (temperature > 60 && temperature <= 75) {
+  } else if (temperature > 55 && temperature <= 70) {
     newTemperatureStatus = 'elevated';
   } else {
     newTemperatureStatus = 'critical';
