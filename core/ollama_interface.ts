@@ -23,7 +23,7 @@ function escapeJson(input: string): string
 
 function extractBetweenMarkers(input: string): string
 {
-  const match = input.match(/```([\s\S]*?)```/);
+  const match = input.match(/```(?:json)?([\s\S]*?)```/);
   return match ? match[1] : input;
 }
 
@@ -33,7 +33,7 @@ export class OllamaInterface
   {
     const isWindows = os.platform() === 'win32';
     const cleanPrompt = escapeJson(prompt);
-    console.log(`[MODEL = ${ model }] cleanPrompt: ${ cleanPrompt }`);
+    // console.log(`[MODEL = ${ model }] cleanPrompt: ${ cleanPrompt }`);
 
     if(isWindows)
     {
