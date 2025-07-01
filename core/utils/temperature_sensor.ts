@@ -1,33 +1,38 @@
-import { exec } from 'child_process';
+import { exec, ExecException } from 'child_process';
 import { osHint, OSContext } from './osHint.js';
+
+type ExecCallback = (command: string, callback: (error: ExecException | null, stdout: string, stderr: string) => void) => void;
 
 /**
  * Retourne la température CPU actuelle en degrés Celsius.
  * Retourne null si la température n'a pas pu être lue.
  */
-export function getCpuTemperature(): Promise<number | null>
+export function getCpuTemperature(
+  _exec: ExecCallback = exec,
+  _osHint: typeof osHint = osHint
+): Promise<number | null>
 {
-  switch (osHint)
+  switch (_osHint)
   {
     case OSContext.Unix:
-      return getUnixCpuTemp();
+      return getUnixCpuTemp(_exec);
 
     case OSContext.WindowsCmd:
-      return getWindowsCmdCpuTemp();
+      return getWindowsCmdCpuTemp(_exec);
 
     case OSContext.WindowsPowershell:
-      return getWindowsPowershellCpuTemp();
+      return getWindowsPowershellCpuTemp(_exec);
 
     default:
       return Promise.resolve(null);
   }
 }
 
-function getUnixCpuTemp(): Promise<number | null>
+function getUnixCpuTemp(_exec: ExecCallback): Promise<number | null>
 {
   return new Promise((resolve) =>
   {
-    exec('sensors', (error, stdout, stderr) =>
+    _exec('sensors', (error, stdout, stderr) =>
     {
       if (error || stderr)
       {
@@ -48,13 +53,14 @@ function getUnixCpuTemp(): Promise<number | null>
   });
 }
 
-function getWindowsCmdCpuTemp(): Promise<number | null>
+function getWindowsCmdCpuTemp(_exec: ExecCallback): Promise<number | null>
 {
-  const cmd = 'wmic /namespace:\\\\root\\wmi PATH MSAcpi_ThermalZoneTemperature get CurrentTemperature';
+  const cmd = 'wmic /namespace:\\root\wmi PATH MSAcpi_ThermalZoneTemperature get CurrentTemperature';
 
   return new Promise((resolve) =>
   {
-    exec(cmd, (error, stdout, stderr) =>
+    _exec(cmd, (error, stdout, stderr) =>
+
     {
       if (error || stderr)
       {
@@ -77,13 +83,13 @@ function getWindowsCmdCpuTemp(): Promise<number | null>
   });
 }
 
-function getWindowsPowershellCpuTemp(): Promise<number | null>
+function getWindowsPowershellCpuTemp(_exec: ExecCallback): Promise<number | null>
 {
   const psCommand = 'Get-WmiObject MSAcpi_ThermalZoneTemperature -Namespace "root/wmi" | Select-Object -First 1 CurrentTemperature';
 
   return new Promise((resolve) =>
   {
-    exec(`powershell -Command "${psCommand}"`, (error, stdout, stderr) =>
+    _exec(`powershell -Command "${psCommand}"`, (error, stdout, stderr) =>
     {
       if (error || stderr)
       {
