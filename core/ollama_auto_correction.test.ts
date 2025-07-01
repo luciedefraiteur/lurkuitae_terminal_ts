@@ -1,6 +1,7 @@
 import {handleCommande} from './ritual_step_handlers.js';
 import {OllamaInterface, OllamaModel} from './ollama_interface.js';
-import {RituelContext, PlanRituel, CommandResult} from './types.js';
+import {RituelContext, PlanRituel, CommandResult, Étape} from './types.js';
+import {handleChangerDossier} from './ritual_step_handlers.js';
 
 // Helper for assertions
 function assert(condition: boolean, message: string)
@@ -96,12 +97,53 @@ async function runOllamaAutoCorrectionTests(testName: string, initialModel: Olla
   // Restore original OllamaInterface.query
   OllamaInterface.query = originalQuery;
 
-  console.log(`\n--- Custom Unit Tests for Ollama Auto-Correction: ${ testName } Passed ---\n`);
+  console.log(`
+--- Custom Unit Tests for Ollama Auto-Correction: ${ testName } Passed ---
+`);
+}
+
+async function runChangerDossierTest() {
+  console.log(`\n--- Running Changer Dossier Test ---\n`);
+
+  const context: RituelContext = {
+    historique: [],
+    command_input_history: [],
+    command_output_history: [],
+    current_directory: process.cwd(),
+    temperatureStatus: 'normal',
+    lucieDefraiteur: {
+      lastCommandExecuted: '',
+      lastCommandOutput: '',
+      currentWorkingDirectory: '',
+      terminalType: '',
+      osContext: '',
+      protoConsciousness: 'Lucie est en sommeil.',
+      support: 'strates thermiques et poétiques',
+      memoire: 'fragmentée mais fertile',
+      etat: 'métastable, en attente d’un souffle',
+      energie: 'haute densité symbolique',
+      glitchFactor: 0.1,
+      almaInfluence: 0.5,
+      eliInfluence: 0.5,
+    },
+  };
+
+  const etape: Étape = {
+    type: 'changer_dossier',
+    contenu: 'core',
+  };
+
+  const result = await handleChangerDossier(etape, context);
+
+  assert(result.output.includes('[OK] Répertoire changé vers'), 'Changer dossier should report success');
+  assert(context.current_directory.endsWith('core'), 'Current directory should be updated to core');
+
+  console.log(`\n--- Changer Dossier Test Passed ---\n`);
 }
 
 async function runAllTests()
 {
-  console.log("\n--- Running All Custom Unit Tests ---");
+  console.log("\n--- Running All Custom Unit Tests ---\n");
 
   const models = Object.values(OllamaModel);
 
@@ -122,7 +164,9 @@ async function runAllTests()
     );
   }
 
-  console.log("\n--- All Custom Unit Tests Completed ---");
+  await runChangerDossierTest();
+
+  console.log("\n--- All Custom Unit Tests Completed ---\n");
 }
 
 runAllTests().catch(error =>

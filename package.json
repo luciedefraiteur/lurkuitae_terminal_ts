@@ -8,6 +8,7 @@
     "start-debug": "nodemon --inspect-brk --exec \"node --trace-warnings --loader ts-node/esm\" main.ts",
     "start": "nodemon --exec \"node --trace-warnings --loader ts-node/esm\" main.ts",
     "build": "tsc",
+    "test": "node --loader ts-node/esm core/ollama_auto_correction.test.ts",
     "dev": "nodemon --watch . --exec ts-node-esm main.ts",
     "start:mistral": "npm run start -- --model mistral",
     "start:llama3": "npm run start -- --model llama3",
