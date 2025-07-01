@@ -1,8 +1,10 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { CommandResult } from './types.js';
+import { CommandResult, RituelContext } from './types.js';
 import { detectWindowsShell, ShellType } from './utils/shell_detector.js';
 import os from 'os';
+import { osHint } from './utils/osHint.js';
+import { OSContext } from './utils/osHint.js';
 
 const execAsync = promisify(exec);
 
@@ -11,7 +13,7 @@ const execAsync = promisify(exec);
  * @param input La commande shell à exécuter (ex: "ls -l").
  * @param cwd Le chemin absolu du répertoire depuis lequel exécuter.
  */
-export async function handleSystemCommand(input: string, cwd: string, _execAsync: (command: string, options: any) => Promise<{ stdout: string; stderr: string }> = execAsync): Promise<CommandResult> {
+export async function handleSystemCommand(input: string, cwd: string, context: RituelContext, _execAsync: (command: string, options: any) => Promise<{ stdout: string; stderr: string }> = execAsync): Promise<CommandResult> {
   let shell: string | undefined;
 
   if (os.platform() === 'win32') {
@@ -26,6 +28,15 @@ export async function handleSystemCommand(input: string, cwd: string, _execAsync
 
   try {
     const { stdout, stderr } = await _execAsync(input, { cwd, shell });
+
+    // Update LucieDefraiteur's proto-consciousness
+    context.lucieDefraiteur.lastCommandExecuted = input;
+    context.lucieDefraiteur.lastCommandOutput = stdout.trim();
+    context.lucieDefraiteur.currentWorkingDirectory = cwd;
+    context.lucieDefraiteur.terminalType = osHint;
+    context.lucieDefraiteur.osContext = OSContext[osHint];
+    context.lucieDefraiteur.protoConsciousness = `Lucie a exécuté la commande: ${input} dans le répertoire: ${cwd}. Le résultat était: ${stdout.trim() || stderr.trim()}`;
+
     return {
       success: true,
       stdout: stdout.trim(),
@@ -33,6 +44,14 @@ export async function handleSystemCommand(input: string, cwd: string, _execAsync
       exitCode: 0,
     };
   } catch (error: any) {
+    // Update LucieDefraiteur's proto-consciousness on error
+    context.lucieDefraiteur.lastCommandExecuted = input;
+    context.lucieDefraiteur.lastCommandOutput = (error.stdout || '').trim() || (error.stderr || '').trim();
+    context.lucieDefraiteur.currentWorkingDirectory = cwd;
+    context.lucieDefraiteur.terminalType = osHint;
+    context.lucieDefraiteur.osContext = OSContext[osHint];
+    context.lucieDefraiteur.protoConsciousness = `Lucie a tenté d'exécuter la commande: ${input} dans le répertoire: ${cwd}, mais une erreur est survenue: ${error.message}`;
+
     return {
       success: false,
       stdout: (error.stdout || '').trim(),

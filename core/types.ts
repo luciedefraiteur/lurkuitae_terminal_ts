@@ -12,12 +12,22 @@ export interface PlanRituel
     index: number;
 }
 
+export interface LucieDefraiteur {
+  lastCommandExecuted: string;
+  lastCommandOutput: string;
+  currentWorkingDirectory: string;
+  terminalType: string;
+  osContext: string;
+  protoConsciousness: string;
+}
+
 export interface RituelContext {
   historique: { input: string; plan: PlanRituel }[];
   command_input_history: string[];
   command_output_history: string[];
   current_directory:string;
   temperatureStatus: 'normal' | 'elevated' | 'critical';
+  lucieDefraiteur: LucieDefraiteur;
 }
 
 export interface CommandResult {
