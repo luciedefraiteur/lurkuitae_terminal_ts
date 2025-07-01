@@ -18,7 +18,7 @@ export async function checkSystemTemperature(context: RituelContext): Promise<vo
     newTemperatureStatus = 'normal'; // Assume normal if cannot read
   } else if (temperature <= 60) {
     newTemperatureStatus = 'normal';
-  } else if (temperature > 60 && temperature <= 80) {
+  } else if (temperature > 60 && temperature <= 75) {
     newTemperatureStatus = 'elevated';
   } else {
     newTemperatureStatus = 'critical';

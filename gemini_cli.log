@@ -1,6 +1,5 @@
 Plan actuel:
-1. Nettoyer `generateRitualSequence.ts` en supprimant le contenu du dupliqué et les références aux copies inutiles de `REINCARNATIO_LURKUITA_PROMPT`. (Terminé)
-2. Ajouter les imports nécessaires pour lire les parties statiques du prompt. (Terminé)
-3. M'assurer que `ritual_role_principles.promptPart` est correctement formaté pour être inclus. (Terminé)
+1. Modifier `core/utils/temperature_monitor.ts` pour abaisser le seuil de température critique de 80°C à 75°C. (Terminé)
+2. Compiler le projet pour vérifier que la modification n'introduit pas d'erreurs. (Terminé)
 
 Toutes les étapes du plan sont terminées.
