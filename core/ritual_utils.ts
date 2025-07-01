@@ -39,6 +39,7 @@ Note: Pour la navigation dans les répertoires, utilise l'étape 'changer_dossie
       almaInfluence: 0.5,
       eliInfluence: 0.5,
     },
+    chantModeEnabled: false,
   };
 }
 

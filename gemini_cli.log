@@ -1,8 +1,6 @@
 Plan actuel:
-1. Modifier `core/utils/temperature_monitor.ts` pour ajuster les seuils de température :
-    *   Le statut `normal` passera de `<= 60°C` à `<= 55°C`.
-    *   Le statut `elevated` passera de `> 60°C et <= 75°C` à `> 55°C et <= 70°C`.
-    *   Le statut `critical` sera déclenché au-delà de `70°C`. (Terminé)
-2. Compiler le projet pour vérifier que la modification n'introduit pas d'erreurs. (Terminé)
+1. Modifier `core/ollama_auto_correction.test.ts` pour initialiser `chantModeEnabled` dans `RituelContext`. (Terminé)
+2. Modifier `core/ritual_utils.ts` pour initialiser `chantModeEnabled` dans `RituelContext`. (Terminé)
+3. Compiler le projet à nouveau pour vérifier la correction. (Terminé)
 
 Toutes les étapes du plan sont terminées.

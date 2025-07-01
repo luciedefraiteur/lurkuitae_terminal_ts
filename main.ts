@@ -12,7 +12,14 @@ const ask = (q: string) => new Promise<string>((res) => rl.question(q, res));
 // Determine the model from command line arguments
 const args = process.argv.slice(2);
 let model: OllamaModel = OllamaModel.Mistral; // Default model
+let chantModeEnabled: boolean = false;
+
 const modelArgIndex = args.indexOf('--model');
+const chantModeArgIndex = args.indexOf('--chant-mode');
+
+if (chantModeArgIndex > -1) {
+  chantModeEnabled = true;
+}
 if(modelArgIndex > -1 && args[modelArgIndex + 1])
 {
   const requestedModel = args[modelArgIndex + 1];
@@ -29,6 +36,7 @@ if(modelArgIndex > -1 && args[modelArgIndex + 1])
 try
 {
   const context = getContexteInitial();
+  context.chantModeEnabled = chantModeEnabled;
   //demonstrateCursorControl(); // Call the demonstration function
   // Give some time to see the demonstration before the ritual starts
   //await new Promise(resolve => setTimeout(resolve, 5000));
