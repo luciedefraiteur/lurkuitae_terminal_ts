@@ -1,4 +1,5 @@
 import os from 'os';
+import path from 'path';
 
 export type ShellType = 'powershell' | 'cmd' | 'other';
 
@@ -6,18 +7,31 @@ export type ShellType = 'powershell' | 'cmd' | 'other';
  * Détecte le type de shell actuel sur Windows.
  * @returns {ShellType} Le type de shell détecté.
  */
-export function detectWindowsShell(): ShellType {
-  if (os.platform() !== 'win32') {
+export function detectWindowsShell(): ShellType
+{
+  if(os.platform() !== 'win32')
+  {
     return 'other';
   }
 
-  // Vérifier la variable d'environnement PSModulePath pour détecter PowerShell
-  if (process.env.PSModulePath) {
+  const shellPath = process.env.ComSpec || process.env.SHELL || '';
+  const parentProcess = process.env.__PSLockdownPolicy ? 'powershell' : '';
+
+  const lowerShell = shellPath.toLowerCase();
+
+  if(
+    lowerShell.includes('powershell.exe') ||
+    lowerShell.includes('pwsh.exe') ||
+    parentProcess === 'powershell'
+  )
+  {
     return 'powershell';
   }
 
-  // Si ce n'est pas PowerShell, on suppose que c'est CMD par défaut sur Windows
-  // Une détection plus robuste pourrait impliquer de vérifier le nom du processus parent,
-  // mais cela peut être complexe et moins fiable.
-  return 'cmd';
+  if(lowerShell.includes('cmd.exe'))
+  {
+    return 'cmd';
+  }
+
+  return 'other';
 }
