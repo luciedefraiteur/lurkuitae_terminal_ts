@@ -43,22 +43,33 @@ export async function handleCommande(étape: Étape, context: RituelContext, pla
       currentPlan: plan
     });
 
-    const remediationPlan = await OllamaInterface.query(remediationPrompt);
-    try {
-      const parsedRemediationPlan: PlanRituel = JSON.parse(remediationPlan.trim());
-      console.log("[INFO] Exécution du sous-rituel de remédiation...");
-      // Assuming executeRituelPlan is available here or passed as argument
-      // For now, we'll just log that it would be executed.
-      // const remediationResults = await executeRituelPlan(parsedRemediationPlan, context);
-      // result.remediationResults = remediationResults;
-      result.remediationResults = "Remediation plan generated and would be executed.";
-    } catch (e: unknown) {
-      let errorMessage = "An unknown error occurred during remediation plan parsing.";
-      if (e instanceof Error) {
-        errorMessage = e.message;
+    let remediationPlanResponse = await OllamaInterface.query(remediationPrompt);
+    let parsedRemediationPlan: PlanRituel | null = null;
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        parsedRemediationPlan = JSON.parse(remediationPlanResponse.trim());
+        console.log("[INFO] Exécution du sous-rituel de remédiation...");
+        // Assuming executeRituelPlan is available here or passed as argument
+        // For now, we'll just log that it would be executed.
+        // const remediationResults = await executeRituelPlan(parsedRemediationPlan, context);
+        // result.remediationResults = remediationResults;
+        result.remediationResults = "Remediation plan generated and would be executed.";
+        break; // Exit loop if parsing is successful
+      } catch (e: unknown) {
+        let errorMessage = "An unknown error occurred during remediation plan parsing.";
+        if (e instanceof Error) {
+          errorMessage = e.message;
+        }
+        console.error(`[ERREUR] Échec du parsing du plan de remédiation (tentative ${i + 1}/${maxRetries}) :`, errorMessage);
+        if (i < maxRetries - 1) {
+          // Request AI to correct its JSON output
+          const correctionPrompt = `Le JSON que tu as généré est invalide. Erreur: ${errorMessage}. Veuillez générer un JSON valide pour le plan de remédiation.`;
+          remediationPlanResponse = await OllamaInterface.query(correctionPrompt);
+        } else {
+          result.remediationError = `Échec de la remédiation après ${maxRetries} tentatives: ${errorMessage}`;
+        }
       }
-      console.error("[ERREUR] Échec du parsing du plan de remédiation :", errorMessage);
-      result.remediationError = errorMessage;
     }
   }
   return result;

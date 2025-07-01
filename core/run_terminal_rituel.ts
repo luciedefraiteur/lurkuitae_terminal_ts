@@ -3,8 +3,9 @@ import {RituelContext} from './types.js';
 import * as readline from 'readline';
 import {checkSystemTemperature} from './utils/temperature_monitor.js';
 import {Colors, colorize, displayRitualStepResult, startCursorAnimation, stopCursorAnimation} from './utils/ui_utils.js';
+import { OllamaModel } from './ollama_interface.js';
 
-export async function runTerminalRituel(context: RituelContext, rl: readline.Interface, ask: (q: string) => Promise<string>, testInputs?: string[]): Promise<boolean>
+export async function runTerminalRituel(context: RituelContext, rl: readline.Interface, ask: (q: string) => Promise<string>, testInputs?: string[], model: OllamaModel = OllamaModel.Mistral): Promise<boolean>
 {
   let input: string | undefined;
 
@@ -38,7 +39,7 @@ Offre ton souffle (ou tape 'exit') : ${ input }`, Colors.FgCyan)); // Log the si
   startCursorAnimation(); // Start cursor animation during background tasks
   await checkSystemTemperature(context); // Check temperature before generating plan
 
-  const plan = await generateRituel(input, context);
+  const plan = await generateRituel(input, context, model);
 
   if(!plan)
   {
@@ -60,7 +61,7 @@ Offre ton souffle (ou tape 'exit') : ${ input }`, Colors.FgCyan)); // Log the si
       stopCursorAnimation(); // Stop cursor before asking for sub-ritual input
       const userInput = await ask(colorize('↳ Réponse : ', Colors.FgCyan));
       startCursorAnimation(); // Start cursor during sub-ritual plan generation
-      const subPlan = await generateRituel(userInput, context);
+      const subPlan = await generateRituel(userInput, context, model);
       if(subPlan)
       {
         context.historique.push({input: userInput, plan: subPlan});

@@ -1,5 +1,5 @@
 import {handleSystemCommand} from './system_handler.js';
-import {OllamaInterface} from './ollama_interface.js';
+import {OllamaInterface, OllamaModel} from './ollama_interface.js';
 import {generateRitualSequencePrompt} from './prompts/generateRitualSequence.js';
 import {generateAnalysisPrompt} from './prompts/generateAnalysisPrompt.js';
 import {generateErrorRemediationPrompt} from './prompts/generateErrorRemediationPrompt.js';
@@ -18,12 +18,12 @@ export function getContexteInitial(): RituelContext {
   };
 }
 
-export async function safeQuery(prompt: string, label: string): Promise<string> {
+export async function safeQuery(prompt: string, label: string, model?: OllamaModel): Promise<string> {
   let response = '';
   let attempts = 0;
 
   while (!response && attempts < 3) {
-    response = await OllamaInterface.query(prompt);
+    response = await OllamaInterface.query(prompt, model);
     await new Promise((r) => setTimeout(r, 1));
     attempts++;
     console.log(`[INFO] Tentative ${attempts} - ${label} : ${response}`);
@@ -37,11 +37,11 @@ export async function safeQuery(prompt: string, label: string): Promise<string> 
   return response;
 }
 
-export async function generateRituel(input: string, context: RituelContext): Promise<PlanRituel | null> {
+export async function generateRituel(input: string, context: RituelContext, model?: OllamaModel): Promise<PlanRituel | null> {
   const planPrecedent = context.historique.at(-1)?.plan;
   const indexPrecedent = planPrecedent?.index ?? undefined;
   const prompt = generateRitualSequencePrompt(input, planPrecedent, indexPrecedent, context);
-  const response = await safeQuery(prompt, 'planification');
+  const response = await safeQuery(prompt, 'planification', model);
 
   try {
     return JSON.parse(response.trim());

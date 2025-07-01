@@ -8,7 +8,11 @@
     "start-debug": "nodemon --inspect-brk --exec \"node --trace-warnings --loader ts-node/esm\" main.ts",
     "start": "nodemon --exec \"node --trace-warnings --loader ts-node/esm\" main.ts",
     "build": "tsc",
-    "dev": "nodemon --watch . --exec ts-node-esm main.ts"
+    "dev": "nodemon --watch . --exec ts-node-esm main.ts",
+    "start:mistral": "npm run start -- --model mistral",
+    "start:llama3": "npm run start -- --model llama3",
+    "start:codellama": "npm run start -- --model codellama:7b-instruct",
+    "start:random": "npm run start -- --model random"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",

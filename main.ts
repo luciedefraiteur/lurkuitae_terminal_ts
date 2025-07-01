@@ -2,11 +2,26 @@ import { getContexteInitial } from './core/ritual_utils.js';
 import { runTerminalRituel } from './core/run_terminal_rituel.js';
 import * as readline from 'readline';
 import { demonstrateCursorControl } from './core/utils/ui_utils.js';
+import { OllamaModel } from './core/ollama_interface.js';
 
 console.log('☽ LURKUITAE ☾ Terminal Codex Vivant ☾');
 
 const rl = readline.createInterface({input: process.stdin, output: process.stdout});
 const ask = (q: string) => new Promise<string>((res) => rl.question(q, res));
+
+// Determine the model from command line arguments
+const args = process.argv.slice(2);
+let model: OllamaModel = OllamaModel.Mistral; // Default model
+const modelArgIndex = args.indexOf('--model');
+if (modelArgIndex > -1 && args[modelArgIndex + 1]) {
+  const requestedModel = args[modelArgIndex + 1];
+  if (Object.values(OllamaModel).includes(requestedModel as OllamaModel)) {
+    model = requestedModel as OllamaModel;
+  } else if (requestedModel === 'random') {
+    const models = Object.values(OllamaModel);
+    model = models[Math.floor(Math.random() * models.length)];
+  }
+}
 
 try {
   const context = getContexteInitial();
@@ -23,7 +38,7 @@ try {
     "show me the content of index.html",
     "exit"
   ];
-  await runTerminalRituel(context, rl, ask);
+  await runTerminalRituel(context, rl, ask, testInputs, model);
 } catch (err) {
   console.error("[ERREUR FATALE]", err);
 } finally {
