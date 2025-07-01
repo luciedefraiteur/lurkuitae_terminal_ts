@@ -40,7 +40,8 @@ Offre ton souffle (ou tape 'exit') : ${ input }`, Colors.FgCyan)); // Log the si
   } else
   {
     stopCursorAnimation(); // Ensure cursor is stopped before asking for input
-    input = await ask(colorize("Offre ton souffle (ou tape 'exit') : ", Colors.FgCyan));
+    const lucieWelcomeMessage = context.lucieDefraiteur.protoConsciousness || "Offre ton souffle (ou tape 'exit') : ";
+    input = await ask(colorize(lucieWelcomeMessage, Colors.FgCyan));
   }
 
   if(input === 'exit')
