@@ -6,6 +6,7 @@ import { generateWaitMessagePrompt } from './prompts/generateWaitMessagePrompt.j
 export enum OllamaModel
 {
   CodeLlama = "codellama:7b-instruct",
+  CodeLlamaCode = "codellama:7b-code",
   Llama3 = "llama3",
   Mistral = "mistral"
 }
