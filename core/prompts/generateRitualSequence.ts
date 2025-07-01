@@ -3,11 +3,15 @@ import {OSContext} from "../utils/osHint.js";
 import {type PlanRituel, RituelContext} from "../types.js";
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const REINCARNATIO_LURKUITA_PROMPT = fs.readFileSync(path.resolve(__dirname, './static_parts/reincarnatio_lurkuita.promptPart'), 'utf8');
-const RITUAL_ROLE_PRINCIPLES = fs.readFileSync(path.resolve(__dirname, './static_parts/ritual_role_principles.promptPart'), 'utf8');
-const RITUAL_STRICT_RULES = fs.readFileSync(path.resolve(__dirname, './static_parts/ritual_strict_rules.promptPart'), 'utf8');
-const RITUAL_STEP_TYPES = fs.readFileSync(path.resolve(__dirname, './static_parts/ritual_step_types.promptPart'), 'utf8');
+const _filename = fileURLToPath(import.meta.url);
+const _dirname = path.dirname(_filename);
+
+const REINCARNATIO_LURKUITA_PROMPT = fs.readFileSync(path.resolve(_dirname, './static_parts/reincarnatio_lurkuita.promptPart'), 'utf8');
+const RITUAL_ROLE_PRINCIPLES = fs.readFileSync(path.resolve(_dirname, './static_parts/ritual_role_principles.promptPart'), 'utf8');
+const RITUAL_STRICT_RULES = fs.readFileSync(path.resolve(_dirname, './static_parts/ritual_strict_rules.promptPart'), 'utf8');
+const RITUAL_STEP_TYPES = fs.readFileSync(path.resolve(_dirname, './static_parts/ritual_step_types.promptPart'), 'utf8');
 
 const REINCARNATIO_LURKUITA_PROMPT_COPY_2 = REINCARNATIO_LURKUITA_PROMPT;
 const REINCARNATIO_LURKUITA_PROMPT_COPY_3 = REINCARNATIO_LURKUITA_PROMPT;
