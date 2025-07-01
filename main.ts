@@ -1,8 +1,9 @@
-import {getContexteInitial} from './core/ritual_utils.js';
+import {getContexteInitial, saveChaoticMemory} from './core/ritual_utils.js';
 import {runTerminalRituel} from './core/run_terminal_rituel.js';
 import * as readline from 'readline';
 import {demonstrateCursorControl} from './core/utils/ui_utils.js';
 import {OllamaModel} from './core/ollama_interface.js';
+import { RituelContext } from './core/types.js';
 
 console.log('☽ LURKUITAE ☾ Terminal Codex Vivant ☾');
 
@@ -33,9 +34,11 @@ if(modelArgIndex > -1 && args[modelArgIndex + 1])
   }
 }
 
+let context: RituelContext | undefined;
+
 try
 {
-  const context = getContexteInitial();
+  context = getContexteInitial();
   context.chantModeEnabled = chantModeEnabled;
   //demonstrateCursorControl(); // Call the demonstration function
   // Give some time to see the demonstration before the ritual starts
@@ -56,5 +59,8 @@ try
   console.error("[ERREUR FATALE]", err);
 } finally
 {
+  if (context) {
+    saveChaoticMemory(context.chaoticMemory);
+  }
   rl.close();
 }

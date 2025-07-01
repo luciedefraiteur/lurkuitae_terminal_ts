@@ -36,6 +36,7 @@ export interface RituelContext {
   temperatureStatus: 'normal' | 'elevated' | 'critical';
   lucieDefraiteur: LucieDefraiteur;
   chantModeEnabled: boolean;
+  chaoticMemory: string[];
 }
 
 export interface CommandResult {

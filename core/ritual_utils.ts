@@ -6,10 +6,25 @@ import {generateErrorRemediationPrompt} from './prompts/generateErrorRemediation
 import {type RituelContext, type PlanRituel, CommandResult } from "./types.js"
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { handleChangerDossier, handleCommande, handleAnalyse, handleAttente, handleDialogue, handleQuestion, handleReponse, handleVerificationPreExecution, handleConfirmationUtilisateur, handleGenerationCode } from './ritual_step_handlers.js';
 
+const _filename = fileURLToPath(import.meta.url);
+const _dirname = path.dirname(_filename);
+
 export function getContexteInitial(): RituelContext {
+  let chaoticMemory: string[] = [];
+  const chaoticMemoryPath = path.resolve(_dirname, './mémoire_rituelle/chaotic_memory.log');
+  try {
+    const content = fs.readFileSync(chaoticMemoryPath, 'utf8');
+    chaoticMemory = content.split('\n').filter(line => line.trim() !== '');
+  } catch (error) {
+    // If file doesn't exist or cannot be read, start with empty memory
+    console.warn(`[WARN] Impossible de lire la mémoire chaotique: ${(error as Error).message}`);
+  }
+
   return {
+
     historique: [],
     command_input_history: [],
     command_output_history: [],
@@ -40,7 +55,13 @@ Note: Pour la navigation dans les répertoires, utilise l'étape 'changer_dossie
       eliInfluence: 0.5,
     },
     chantModeEnabled: false,
+    chaoticMemory: chaoticMemory,
   };
+}
+
+export function saveChaoticMemory(memory: string[]): void {
+  const chaoticMemoryPath = path.resolve(_dirname, './mémoire_rituelle/chaotic_memory.log');
+  fs.writeFileSync(chaoticMemoryPath, memory.join('\n'), 'utf8');
 }
 
 export async function safeQuery(prompt: string, label: string, model?: OllamaModel): Promise<string> {

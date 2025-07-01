@@ -1,5 +1,5 @@
 Plan actuel:
-1. Modifier `core/prompts/generateRitualSequence.ts` pour utiliser `path.resolve` avec `_dirname` pour le chemin de `ritual_role_principles.promptPart`. (Terminé)
-2. Compiler le projet pour vérifier que la correction n'introduit pas d'erreurs. (Terminé)
+1. Modifier `main.ts` pour initialiser `context` à `undefined` et vérifier sa valeur avant d'appeler `saveChaoticMemory`. (Terminé)
+2. Compiler le projet à nouveau pour vérifier la correction. (Terminé)
 
 Toutes les étapes du plan sont terminées.

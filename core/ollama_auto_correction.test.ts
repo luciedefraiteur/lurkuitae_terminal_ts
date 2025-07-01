@@ -62,6 +62,7 @@ async function runOllamaAutoCorrectionTests(testName: string, initialModel: Olla
       eliInfluence: 0.5,
     },
     chantModeEnabled: false,
+    chaoticMemory: [],
   };
 
   const plan: PlanRituel = {
@@ -128,6 +129,7 @@ async function runChangerDossierTest() {
       eliInfluence: 0.5,
     },
     chantModeEnabled: false,
+    chaoticMemory: [],
   };
 
   const etape: Étape = {
