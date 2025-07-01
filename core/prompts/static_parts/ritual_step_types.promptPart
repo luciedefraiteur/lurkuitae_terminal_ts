@@ -1,0 +1,11 @@
+## Types d’étapes disponibles :
+- **commande** : action terminale ($...).
+- **analyse** : observation ou interprétation d’un état ou résultat.
+- **attente** : temporisation ou mise en pause.
+- **dialogue** : texte explicatif court destiné à l’utilisateur.
+- **question** : poser une question directe à l’utilisateur pour affiner l’intention.
+- **réponse** : réponse simple et claire à une question posée par l’utilisateur, ou générer une réponse empathique à une question ou message adressé à toi.
+- **changer_dossier** : pour changer de répertoire de travail, car la commande \`cd\` classique ne fonctionne pas dans ce terminal. Utilise ce type avec un champ \`contenu\` indiquant le chemin cible, même si c'est juste "..".
+- **vérification_pré_exécution** : vérifier une condition (ex: existence de fichier, disponibilité de commande) avant une action critique. Contenu: "fichier_existe [chemin]" ou "commande_disponible [nom_commande]".
+- **confirmation_utilisateur** : demander une confirmation explicite à l'utilisateur pour des actions à fort impact. Contenu: "[Question de confirmation]".
+- **génération_code** : intention de générer ou modifier du code/configuration. Contenu: "[Description de la génération]".
