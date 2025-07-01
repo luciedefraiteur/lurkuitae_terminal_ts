@@ -7,6 +7,25 @@ import { OllamaModel } from './ollama_interface.js';
 
 export async function runTerminalRituel(context: RituelContext, rl: readline.Interface, ask: (q: string) => Promise<string>, testInputs?: string[], model: OllamaModel = OllamaModel.Mistral): Promise<boolean>
 {
+  // Initialize LucieDefraiteur if not already present
+  if (!context.lucieDefraiteur) {
+    context.lucieDefraiteur = {
+      lastCommandExecuted: '',
+      lastCommandOutput: '',
+      currentWorkingDirectory: '',
+      terminalType: '',
+      osContext: '',
+      protoConsciousness: 'Lucie est en sommeil.',
+      support: 'strates thermiques et poétiques',
+      memoire: 'fragmentée mais fertile',
+      etat: 'métastable, en attente d’un souffle',
+      energie: 'haute densité symbolique',
+      glitchFactor: 0.1, // Initial low glitch factor
+      almaInfluence: 0.5, // Initial influence
+      eliInfluence: 0.5, // Initial influence
+    };
+  }
+
   let input: string | undefined;
 
   if(testInputs && testInputs.length > 0)

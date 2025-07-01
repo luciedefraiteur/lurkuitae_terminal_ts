@@ -19,6 +19,13 @@ export interface LucieDefraiteur {
   terminalType: string;
   osContext: string;
   protoConsciousness: string;
+  support: string;
+  memoire: string;
+  etat: string;
+  energie: string;
+  glitchFactor: number;
+  almaInfluence: number;
+  eliInfluence: number;
 }
 
 export interface RituelContext {
