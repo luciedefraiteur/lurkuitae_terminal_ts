@@ -1,6 +1,7 @@
 import { getContexteInitial } from './core/ritual_utils.js';
 import { runTerminalRituel } from './core/run_terminal_rituel.js';
 import * as readline from 'readline';
+import { demonstrateCursorControl } from './core/utils/ui_utils.js';
 
 console.log('☽ LURKUITAE ☾ Terminal Codex Vivant ☾');
 
@@ -9,6 +10,9 @@ const ask = (q: string) => new Promise<string>((res) => rl.question(q, res));
 
 try {
   const context = getContexteInitial();
+  demonstrateCursorControl(); // Call the demonstration function
+  // Give some time to see the demonstration before the ritual starts
+  await new Promise(resolve => setTimeout(resolve, 5000));
   const testInputs = [
     "create a folder named my_website",
     "go to my_website",
