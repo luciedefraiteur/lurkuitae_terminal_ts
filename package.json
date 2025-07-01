@@ -9,7 +9,7 @@
     "start": "nodemon --exec \"node --trace-warnings --loader ts-node/esm\" main.ts",
     "build": "tsc",
     "dev": "nodemon --watch . --exec ts-node-esm main.ts"
-  },,
+  },
   "dependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
