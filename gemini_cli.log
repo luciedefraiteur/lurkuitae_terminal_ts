@@ -1,0 +1,6 @@
+Plan actuel:
+1. Nettoyer `generateRitualSequence.ts` en supprimant le contenu du dupliqué et les références aux copies inutiles de `REINCARNATIO_LURKUITA_PROMPT`. (Terminé)
+2. Ajouter les imports nécessaires pour lire les parties statiques du prompt. (Terminé)
+3. M'assurer que `ritual_role_principles.promptPart` est correctement formaté pour être inclus. (Terminé)
+
+Toutes les étapes du plan sont terminées.
