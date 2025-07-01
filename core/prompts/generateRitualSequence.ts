@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = path.dirname(_filename);
 
-const RITUAL_ROLE_PRINCIPLES_PROMPT = fs.readFileSync(path.join(_dirname, '../static_parts/ritual_role_principles.promptPart'), 'utf8');
+const RITUAL_ROLE_PRINCIPLES_PROMPT = fs.readFileSync(path.join(_dirname, '../prompts/static_parts/ritual_role_principles.promptPart'), 'utf8');
 
 
 

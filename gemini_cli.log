@@ -1,5 +1,5 @@
 Plan actuel:
-1. Modifier `core/run_terminal_rituel.ts` pour caster l'objet `error` en `Error` dans le bloc `catch`. (Terminé)
-2. Compiler le projet à nouveau pour vérifier la correction. (Terminé)
+1. Modifier `core/prompts/generateRitualSequence.ts` pour corriger le chemin de `ritual_role_principles.promptPart`. (Terminé)
+2. Compiler le projet pour vérifier que la correction n'introduit pas d'erreurs. (Terminé)
 
 Toutes les étapes du plan sont terminées.
