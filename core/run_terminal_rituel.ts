@@ -32,6 +32,11 @@ export async function runTerminalRituel(context: RituelContext, rl: readline.Int
     };
   }
 
+  // Initialize step_results_history if not already present
+  if (!context.step_results_history) {
+    context.step_results_history = [];
+  }
+
   let input: string | undefined;
 
   if(testInputs && testInputs.length > 0)

@@ -44,6 +44,7 @@ async function runOllamaAutoCorrectionTests(testName: string, initialModel: Olla
     historique: [],
     command_input_history: [],
     command_output_history: [],
+    step_results_history: [], // Added for testing
     current_directory: '/tmp',
     temperatureStatus: 'normal',
     lucieDefraiteur: {
@@ -110,6 +111,7 @@ async function runChangerDossierTest() {
     historique: [],
     command_input_history: [],
     command_output_history: [],
+    step_results_history: [], // Added for testing
     current_directory: process.cwd(),
     temperatureStatus: 'normal',
     lucieDefraiteur: {

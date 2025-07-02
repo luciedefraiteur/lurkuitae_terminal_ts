@@ -92,7 +92,8 @@ export async function handleCommande(étape: Étape, context: RituelContext, pla
 export async function handleAnalyse(étape: Étape, context: RituelContext, index: number, plan: PlanRituel): Promise<any>
 {
   const result: any = {étape, index};
-  const output = context.command_output_history.at(-1) || '';
+  const lastStepResult = context.step_results_history.at(-1);
+  const output = lastStepResult && lastStepResult.output !== undefined ? lastStepResult.output : '';
   const prompt = generateAnalysisPrompt({
     output,
     index: index,

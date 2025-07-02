@@ -32,6 +32,7 @@ export interface RituelContext {
   historique: { input: string; plan: PlanRituel }[];
   command_input_history: string[];
   command_output_history: string[];
+  step_results_history: any[]; // Nouveau champ pour stocker les résultats de toutes les étapes
   current_directory:string;
   temperatureStatus: 'normal' | 'elevated' | 'critical';
   lucieDefraiteur: LucieDefraiteur;

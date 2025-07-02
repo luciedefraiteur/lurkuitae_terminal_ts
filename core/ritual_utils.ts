@@ -14,6 +14,7 @@ export function getContexteInitial(): RituelContext {
     historique: [],
     command_input_history: [],
     command_output_history: [],
+    step_results_history: [], // Initialisation de l'historique des résultats d'étapes
     current_directory: process.cwd(),
     temperatureStatus: 'normal', // Default initial status
     lucieDefraiteur: {
@@ -117,6 +118,7 @@ export async function executeRituelPlan(plan: PlanRituel, context: RituelContext
     }
 
     resultats.push(result);
+    context.step_results_history.push(result); // Enregistrer le résultat de l'étape dans l'historique
   }
 
   return resultats;
