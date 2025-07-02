@@ -34,6 +34,7 @@ export interface NarrativeState
   currentArc: string;
   keyMotifs: string[];
   characterStates: {[characterName: string]: any};
+  currentDream?: string;
 }
 
 export interface KardiosSphairaState
@@ -64,4 +65,12 @@ export interface CommandResult
   stderr: string;
   exitCode: number | null;
   error?: string;
+}
+
+export interface VectorEntry
+{
+  timestamp: string;
+  pastAction: string;
+  presentIntent: string;
+  futurePlan: string;
 }

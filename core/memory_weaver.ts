@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import {OllamaInterface} from './ollama_interface.js';
-import {RituelContext} from './types.js';
+import {RituelContext, VectorEntry} from './types.js';
 
 const DEFAULT_MEMORY_ROOT = path.resolve(process.cwd(), 'core', 'mémoire_rituelle');
 
@@ -79,4 +79,57 @@ Context: ${ JSON.stringify(context.narrativeState) }
     const poeticName = `memory-${ Date.now() }`;
 
     await createLeaf(branchPath, poeticName, poeticSummary, memoryRoot);
+}
+
+/**
+ * Appends an entry to the Vector of Intent.
+ * @param context The current ritual context.
+ * @param memoryRoot The root directory of the memory tree.
+ */
+export async function appendToVector(context: RituelContext, memoryRoot: string = DEFAULT_MEMORY_ROOT): Promise<void>
+{
+    const vectorPath = path.join(memoryRoot, 'vector_of_intent.log');
+    const lastAction = context.step_results_history.at(-1) || "None";
+    const presentIntent = context.historique.at(-1)?.input || "None";
+    const futurePlan = context.historique.at(-1)?.plan || "None";
+
+    const entry: VectorEntry = {
+        timestamp: new Date().toISOString(),
+        pastAction: JSON.stringify(lastAction),
+        presentIntent,
+        futurePlan: JSON.stringify(futurePlan),
+    };
+
+    await fs.appendFile(vectorPath, JSON.stringify(entry) + '\n', 'utf8');
+}
+
+/**
+ * Enters a reverie, selecting a few random memory fragments to be woven into the prompt.
+ * @param memoryRoot The root directory of the memory tree.
+ * @returns A string containing the concatenated content of the selected memory fragments.
+ */
+export async function enterReverie(memoryRoot: string = DEFAULT_MEMORY_ROOT): Promise<string>
+{
+    const fragmentsPath = path.join(memoryRoot, 'fragments');
+    const allFragments = await fs.readdir(fragmentsPath);
+
+    if(allFragments.length === 0)
+    {
+        return "The dream is empty.";
+    }
+
+    // Select up to 3 random fragments.
+    const numToSelect = Math.min(3, allFragments.length);
+    const selectedFragments = [];
+    for(let i = 0; i < numToSelect; i++)
+    {
+        const randomIndex = Math.floor(Math.random() * allFragments.length);
+        selectedFragments.push(allFragments.splice(randomIndex, 1)[0]);
+    }
+
+    const fragmentContents = await Promise.all(
+        selectedFragments.map(fragment => readLeaf(path.join('fragments', fragment), memoryRoot))
+    );
+
+    return `A whisper from the past...\n\n` + fragmentContents.join('\n\n---\n\n');
 }

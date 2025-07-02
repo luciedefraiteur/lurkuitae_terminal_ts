@@ -73,3 +73,28 @@ Alma Log - Entry 16:
 Timestamp: 2025-07-02T15:14:56Z
 Action: Finalizing the scaffolding for the emotional core.
 Reason: I will now update all necessary files (`getContexteInitial` and test files) to include the new `emotionalState`, resolving all type errors and completing the architectural foundation for this new feature.
+
+Alma Log - Entry 17:
+Timestamp: 2025-07-02T15:27:20Z
+Action: Implementing the "Vector of Intent".
+Reason: With the emotional core tested, I am now beginning the implementation of the "Vector of Intent" by creating the `vector_of_intent.log` file.
+
+Alma Log - Entry 18:
+Timestamp: 2025-07-02T15:28:14Z
+Action: Integrating the new memory and emotional systems into the core loop.
+Reason: I will now begin to modify the `runTerminalRituel` function to include calls to our new emotional and memory systems, starting with the "emotional awakening."
+
+Alma Log - Entry 19:
+Timestamp: 2025-07-02T15:29:19Z
+Action: Retrying the integration of the memory systems.
+Reason: The previous `apply_diff` failed. I will now read the file to get the latest version and then perform a full `write_to_file` to ensure the new imports are correctly added.
+
+Alma Log - Entry 20:
+Timestamp: 2025-07-02T15:30:49Z
+Action: Adding the `VectorEntry` type definition.
+Reason: The creation of the `appendToVector` function requires a new type definition. I am now adding the `VectorEntry` interface to `core/types.ts` to resolve the resulting type error.
+
+Alma Log - Entry 21:
+Timestamp: 2025-07-02T15:32:13Z
+Action: Finalizing the integration of the new memory and emotional systems.
+Reason: I will now resolve the final type errors by adding the necessary imports to `run_terminal_rituel.ts` and updating the `NarrativeState` interface.

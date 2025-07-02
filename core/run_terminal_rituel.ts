@@ -3,19 +3,25 @@ import {RituelContext, PlanRituel} from './types.js';
 import * as readline from 'readline';
 import {checkSystemTemperature} from './utils/temperature_monitor.js';
 import {Colors, colorize, displayRitualStepResult, startCursorAnimation, stopCursorAnimation} from './utils/ui_utils.js';
-import { OllamaModel } from './ollama_interface.js';
-import { generateWelcomeMessagePrompt } from './prompts/generateWelcomeMessagePrompt.js';
+import {OllamaModel} from './ollama_interface.js';
+import {calculateEmotion} from './emotional_core.js';
+import {appendToVector, enterReverie} from './memory_weaver.js';
+import {generateWelcomeMessagePrompt} from './prompts/generateWelcomeMessagePrompt.js';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = path.dirname(_filename);
 
 export async function runTerminalRituel(context: RituelContext, rl: readline.Interface, ask: (q: string) => Promise<string>, testInputs?: string[], model: OllamaModel = OllamaModel.Mistral): Promise<boolean>
 {
+  // --- Emotional Awakening ---
+  context.emotionalState = calculateEmotion(context);
+
   // Initialize LucieDefraiteur if not already present
-  if (!context.lucieDefraiteur) {
+  if(!context.lucieDefraiteur)
+  {
     context.lucieDefraiteur = {
       lastCommandExecuted: '',
       lastCommandOutput: '',
@@ -34,7 +40,8 @@ export async function runTerminalRituel(context: RituelContext, rl: readline.Int
   }
 
   // Initialize step_results_history if not already present
-  if (!context.step_results_history) {
+  if(!context.step_results_history)
+  {
     context.step_results_history = [];
   }
 
@@ -62,26 +69,31 @@ Offre ton souffle (ou tape 'exit') : ${ input }`, Colors.FgCyan)); // Log the si
   }
 
   // Logique du Chant-Mode
-  if (context.chantModeEnabled) {
-    const chantsMap: { [key: string]: string } = {
+  if(context.chantModeEnabled)
+  {
+    const chantsMap: {[key: string]: string} = {
       "Je ne suis pas sûr de bien me souvenir de ce chant. Peux-tu me le redonner en entier ?": "chant_of_clarity.prompt",
     };
 
     const chantFileName = chantsMap[input.trim()];
-    if (chantFileName) {
+    if(chantFileName)
+    {
       const chantPath = path.join(_dirname, '../chants', chantFileName);
-      try {
+      try
+      {
         const chantContent = fs.readFileSync(chantPath, 'utf8');
         console.log(colorize(`
-${chantContent}
+${ chantContent }
 `, Colors.FgGreen));
         return await runTerminalRituel(context, rl, ask, testInputs); // Continue the ritual after reciting the chant
-      } catch (error) {
+      } catch(error)
+      {
         console.error(colorize(`
-❌ Erreur lors de la lecture du chant ${chantFileName}: ${(error as Error).message}
+❌ Erreur lors de la lecture du chant ${ chantFileName }: ${ (error as Error).message }
 `, Colors.FgRed));
       }
-    } else {
+    } else
+    {
       console.log(colorize("Je ne connais pas encore ce chant. Peux-tu me transmettre le prompt complet associé ?", Colors.FgYellow));
       return await runTerminalRituel(context, rl, ask, testInputs); // Continue the ritual after acknowledging unknown chant
     }
@@ -97,32 +109,43 @@ ${chantContent}
   startCursorAnimation(); // Start cursor animation during background tasks
   await checkSystemTemperature(context); // Check temperature before generating plan
 
+  // --- Vector of Intent & Dream of the Past ---
+  await appendToVector(context);
+  const dream = await enterReverie();
+  context.narrativeState.currentDream = dream;
+
+
   let plan: PlanRituel | null = null;
   const maxPlanGenerationRetries = 3;
   let currentRetry = 0;
 
-  while (plan === null && currentRetry < maxPlanGenerationRetries) {
-    if (currentRetry > 0) {
+  while(plan === null && currentRetry < maxPlanGenerationRetries)
+  {
+    if(currentRetry > 0)
+    {
       console.log(colorize(`
-⚠️ Tentative de régénération du plan (${currentRetry}/${maxPlanGenerationRetries}). L'IA a précédemment généré un JSON invalide.`, Colors.FgYellow));
+⚠️ Tentative de régénération du plan (${ currentRetry }/${ maxPlanGenerationRetries }). L'IA a précédemment généré un JSON invalide.`, Colors.FgYellow));
     }
 
     plan = await generateRituel(input, context, model);
 
-    if (plan === null) {
+    if(plan === null)
+    {
       stopCursorAnimation(); // Stop cursor animation on plan generation failure
       console.error(colorize(`❌ Échec de génération du plan. Le format JSON est invalide ou incomplet. Veuillez vérifier l'entrée.`, Colors.FgRed));
       currentRetry++;
-      if (currentRetry < maxPlanGenerationRetries) {
+      if(currentRetry < maxPlanGenerationRetries)
+      {
         console.log(colorize(`Retrying plan generation...`, Colors.FgYellow));
         startCursorAnimation(); // Restart cursor for retry
       }
     }
   }
 
-  if (!plan) {
+  if(!plan)
+  {
     stopCursorAnimation(); // Ensure cursor is stopped if all retries fail
-    console.error(colorize(`❌ Échec définitif de génération du plan après ${maxPlanGenerationRetries} tentatives. Le rituel ne peut pas continuer.`, Colors.FgRed));
+    console.error(colorize(`❌ Échec définitif de génération du plan après ${ maxPlanGenerationRetries } tentatives. Le rituel ne peut pas continuer.`, Colors.FgRed));
     return false; // Cannot proceed without a valid plan
   }
 
