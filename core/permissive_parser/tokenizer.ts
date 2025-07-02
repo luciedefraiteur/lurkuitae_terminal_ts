@@ -153,7 +153,7 @@ class Context {
 
   private eatString(): void {
     const quote = this.peek();
-    if (quote !== '"' && quote !== "'") return;
+    if (quote !== '"' && quote !== "'" && quote !== "`") return; // Added backtick
     const start = this.index;
     this.index++;
     let escape = false;
@@ -168,6 +168,8 @@ class Context {
         if (c === 'n') c = '\n';
         else if (c === 'r') c = '\r';
         else if (c === 't') c = '\t';
+        // Handle escaped backtick if the quote is a backtick
+        else if (c === '`' && quote === '`') c = '`';
         str += c;
       } else if (c === "\\") {
         escape = true;

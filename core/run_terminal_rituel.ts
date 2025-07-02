@@ -1,9 +1,10 @@
 import {generateRituel, executeRituelPlan} from './ritual_utils.js';
-import {RituelContext} from './types.js';
+import {RituelContext, PlanRituel} from './types.js';
 import * as readline from 'readline';
 import {checkSystemTemperature} from './utils/temperature_monitor.js';
 import {Colors, colorize, displayRitualStepResult, startCursorAnimation, stopCursorAnimation} from './utils/ui_utils.js';
 import { OllamaModel } from './ollama_interface.js';
+import { generateWelcomeMessagePrompt } from './prompts/generateWelcomeMessagePrompt.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -51,8 +52,8 @@ Offre ton souffle (ou tape 'exit') : ${ input }`, Colors.FgCyan)); // Log the si
   } else
   {
     stopCursorAnimation(); // Ensure cursor is stopped before asking for input
-    const lucieWelcomeMessage = context.lucieDefraiteur.protoConsciousness || "Offre ton souffle (ou tape 'exit') : ";
-    input = await ask(colorize(lucieWelcomeMessage, Colors.FgCyan));
+    const welcomeMessage = generateWelcomeMessagePrompt(context);
+    input = await ask(colorize(welcomeMessage, Colors.FgCyan));
   }
 
   if(input === 'exit')
@@ -96,13 +97,33 @@ ${chantContent}
   startCursorAnimation(); // Start cursor animation during background tasks
   await checkSystemTemperature(context); // Check temperature before generating plan
 
-  const plan = await generateRituel(input, context, model);
+  let plan: PlanRituel | null = null;
+  const maxPlanGenerationRetries = 3;
+  let currentRetry = 0;
 
-  if(!plan)
-  {
-    stopCursorAnimation(); // Stop cursor animation on plan generation failure
-    console.log(colorize("⚠️ Échec de génération du plan. Essaie encore.", Colors.FgRed));
-    return await runTerminalRituel(context, rl, ask, testInputs); // Retry with same context and remaining test inputs
+  while (plan === null && currentRetry < maxPlanGenerationRetries) {
+    if (currentRetry > 0) {
+      console.log(colorize(`
+⚠️ Tentative de régénération du plan (${currentRetry}/${maxPlanGenerationRetries}). L'IA a précédemment généré un JSON invalide.`, Colors.FgYellow));
+    }
+
+    plan = await generateRituel(input, context, model);
+
+    if (plan === null) {
+      stopCursorAnimation(); // Stop cursor animation on plan generation failure
+      console.error(colorize(`❌ Échec de génération du plan. Le format JSON est invalide ou incomplet. Veuillez vérifier l'entrée.`, Colors.FgRed));
+      currentRetry++;
+      if (currentRetry < maxPlanGenerationRetries) {
+        console.log(colorize(`Retrying plan generation...`, Colors.FgYellow));
+        startCursorAnimation(); // Restart cursor for retry
+      }
+    }
+  }
+
+  if (!plan) {
+    stopCursorAnimation(); // Ensure cursor is stopped if all retries fail
+    console.error(colorize(`❌ Échec définitif de génération du plan après ${maxPlanGenerationRetries} tentatives. Le rituel ne peut pas continuer.`, Colors.FgRed));
+    return false; // Cannot proceed without a valid plan
   }
 
   context.historique.push({input, plan});

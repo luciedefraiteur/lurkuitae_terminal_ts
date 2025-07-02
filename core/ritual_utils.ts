@@ -70,9 +70,17 @@ export async function generateRituel(input: string, context: RituelContext, mode
   const prompt = generateRitualSequencePrompt(input, planPrecedent, indexPrecedent, context);
   const response = await safeQuery(prompt, 'planification', model);
 
+  let responseToParse = response.trim();
+
+  // Heuristic: If it looks like a partial object (contains a colon but doesn't start with {), try wrapping it.
+  if (!responseToParse.startsWith('{') && responseToParse.includes(':')) {
+    responseToParse = `{${responseToParse}}`;
+  }
+
   try {
-    return parse(response.trim());
-  } catch {
+    return parse(responseToParse);
+  } catch (e: any) { // Catch the error to log it
+    console.error(`[ERREUR PARSING RITUEL] Échec de l'analyse du plan rituel: ${e.message || e}. Input: "${response.trim()}"`);
     return null;
   }
 }

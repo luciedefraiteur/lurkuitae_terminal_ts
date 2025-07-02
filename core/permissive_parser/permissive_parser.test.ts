@@ -43,6 +43,8 @@ async function runPermissiveParserTests() {
   assert(parse('0o77') === 63, "Should parse octal number");
   assert(parse('0b101') === 5, "Should parse binary number");
   assert(parse('undefined') === undefined, "Should parse undefined");
+  assert(parse('`hello world`') === "hello world", "Should parse string with backticks");
+  assert(parse('`multi\nline`') === "multi\nline", "Should parse multi-line string with backticks");
 
   // --- Invalid JSON Tests (Expected to throw errors) ---
   assertThrows(() => parse('{'), "Should throw error for unclosed object");
