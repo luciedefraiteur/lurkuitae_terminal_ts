@@ -8,6 +8,7 @@ import path from 'path';
 import fs from 'fs';
 import { parse } from './permissive_parser/index.js';
 import { handleChangerDossier, handleCommande, handleAnalyse, handleAttente, handleDialogue, handleQuestion, handleReponse, handleVerificationPreExecution, handleConfirmationUtilisateur, handleGenerationCode } from './ritual_step_handlers.js';
+import { Colors, colorize } from './utils/ui_utils.js';
 
 export function getContexteInitial(): RituelContext {
   return {
@@ -64,7 +65,7 @@ export async function safeQuery(prompt: string, label: string, model?: OllamaMod
   return response;
 }
 
-export async function generateRituel(input: string, context: RituelContext, model?: OllamaModel): Promise<PlanRituel | null> {
+export async function generateRituel(input: string, context: RituelContext, model?: OllamaModel, analysisResult?: string): Promise<PlanRituel | null> {
   const planPrecedent = context.historique.at(-1)?.plan;
   const indexPrecedent = planPrecedent?.index ?? undefined;
   const prompt = generateRitualSequencePrompt(input, planPrecedent, indexPrecedent, context);
@@ -127,6 +128,37 @@ export async function executeRituelPlan(plan: PlanRituel, context: RituelContext
 
     resultats.push(result);
     context.step_results_history.push(result); // Enregistrer le résultat de l'étape dans l'historique
+
+    // --- Logique de réorganisation du plan après une étape d'analyse ---
+    if (étape.type === 'analyse' && result.analysis) {
+      console.log(colorize(`\n✨ Analyse terminée. Réévaluation du plan rituel basée sur l'analyse...`, Colors.FgMagenta));
+
+      const originalInputForThisPlan = context.historique.at(-1)?.input;
+      if (originalInputForThisPlan) {
+        const newPlan = await generateRituel(
+          originalInputForThisPlan,
+          context,
+          undefined, // model (use default or pass explicitly if needed)
+          result.analysis // Pass the analysis result
+        );
+
+        if (newPlan) {
+          console.log(colorize(`\n✅ Nouveau plan rituel généré suite à l'analyse.`, Colors.FgGreen));
+          // Replace the current plan with the new one
+          plan.étapes = newPlan.étapes;
+          plan.complexité = newPlan.complexité;
+          plan.index = newPlan.index; // Update plan's index if new plan starts from a different point
+
+          // Reset loop index to re-evaluate from the current step (which is now the first step of the new plan)
+          // We subtract 1 because the for loop will increment i in the next iteration.
+          i = -1; // Start from the beginning of the new plan
+        } else {
+          console.error(colorize(`\n❌ Échec de la régénération du plan après analyse. Le plan actuel sera poursuivi.`, Colors.FgRed));
+        }
+      } else {
+        console.warn(colorize(`\n⚠️ Impossible de récupérer l'input original pour la régénération du plan après analyse. Le plan actuel sera poursuivi.`, Colors.FgYellow));
+      }
+    }
   }
 
   return resultats;

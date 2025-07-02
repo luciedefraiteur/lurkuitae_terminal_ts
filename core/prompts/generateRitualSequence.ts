@@ -19,7 +19,8 @@ export function generateRitualSequencePrompt(
   input: string,
   planPrecedent?: PlanRituel,
   indexCourant?: number,
-  context?: RituelContext
+  context?: RituelContext,
+  analysisResult?: string
 ): string
 {
   let exemple;
@@ -65,6 +66,11 @@ export function generateRitualSequencePrompt(
       ? `## CONTEXTE RITUEL :\n- Voici le plan précédent (à continuer, compléter, ou réinterpréter) :\n${ JSON.stringify(planPrecedent, null, 2) }\n\n- Tu es actuellement à l’étape indexée : ${ indexCourant }\n\n- L’utilisateur vient de répondre ou reformulé son intention :\n"${ input }"\n\nTu dois adapter ou reprendre la planification en respectant ce contexte. Si le plan précédent est déjà bon, continue logiquement. Sinon, propose mieux.`
       : `## Transformation Requise :\nAnalyse la demande suivante et génère la séquence rituelle optimale :\n"${ input }"`;
 
+  let analysisContext = '';
+  if (analysisResult) {
+    analysisContext = `\n## CONTEXTE D'ANALYSE :\nVoici le résultat de l'analyse de l'étape précédente :\n"${analysisResult}"\nPrends en compte cette analyse pour affiner ou réorienter le plan.`;
+  }
+
   let temperatureWarning = '';
   if(context && context.temperatureStatus === 'elevated')
   {
@@ -107,8 +113,9 @@ ${ RITUAL_ROLE_PRINCIPLES_PROMPT }
 ${ exemple }
 
 ${ contexteRituel }
+${ analysisContext }
 ${ temperatureWarning }
 
-Ta réponse commence directement par \`{\` sans aucune explication extérieure.
+Ta réponse commence directement par "{" sans aucune explication extérieure.
 `.trim();
 }
