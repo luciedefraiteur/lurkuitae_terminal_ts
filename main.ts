@@ -3,6 +3,8 @@ import {runTerminalRituel} from './core/run_terminal_rituel.js';
 import * as readline from 'readline';
 import {demonstrateCursorControl} from './core/utils/ui_utils.js';
 import {OllamaModel} from './core/ollama_interface.js';
+import {parse} from './core/permissive_parser/index.js';
+
 
 console.log('☽ LURKUITAE ☾ Terminal Codex Vivant ☾');
 
@@ -17,7 +19,8 @@ let chantModeEnabled: boolean = false;
 const modelArgIndex = args.indexOf('--model');
 const chantModeArgIndex = args.indexOf('--chant-mode');
 
-if (chantModeArgIndex > -1) {
+if(chantModeArgIndex > -1)
+{
   chantModeEnabled = true;
 }
 if(modelArgIndex > -1 && args[modelArgIndex + 1])

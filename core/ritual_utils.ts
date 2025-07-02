@@ -3,9 +3,10 @@ import {OllamaInterface, OllamaModel} from './ollama_interface.js';
 import {generateRitualSequencePrompt} from './prompts/generateRitualSequence.js';
 import {generateAnalysisPrompt} from './prompts/generateAnalysisPrompt.js';
 import {generateErrorRemediationPrompt} from './prompts/generateErrorRemediationPrompt.js';
-import {type RituelContext, type PlanRituel, CommandResult } from "./types.js"
+import { type RituelContext, type PlanRituel, CommandResult } from "./types.js"
 import path from 'path';
 import fs from 'fs';
+import { parse } from './permissive_parser/index.js';
 import { handleChangerDossier, handleCommande, handleAnalyse, handleAttente, handleDialogue, handleQuestion, handleReponse, handleVerificationPreExecution, handleConfirmationUtilisateur, handleGenerationCode } from './ritual_step_handlers.js';
 
 export function getContexteInitial(): RituelContext {
@@ -69,7 +70,7 @@ export async function generateRituel(input: string, context: RituelContext, mode
   const response = await safeQuery(prompt, 'planification', model);
 
   try {
-    return JSON.parse(response.trim());
+    return parse(response.trim());
   } catch {
     return null;
   }
