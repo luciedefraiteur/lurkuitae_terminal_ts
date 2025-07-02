@@ -3,7 +3,7 @@ import {OSContext} from "../utils/osHint.js";
 import {type PlanRituel, RituelContext} from "../types.js";
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = path.dirname(_filename);
@@ -67,8 +67,9 @@ export function generateRitualSequencePrompt(
       : `## Transformation Requise :\nAnalyse la demande suivante et génère la séquence rituelle optimale :\n"${ input }"`;
 
   let analysisContext = '';
-  if (analysisResult) {
-    analysisContext = `\n## CONTEXTE D'ANALYSE :\nVoici le résultat de l'analyse de l'étape précédente :\n"${analysisResult}"\nPrends en compte cette analyse pour affiner ou réorienter le plan.`;
+  if(analysisResult)
+  {
+    analysisContext = `\n## CONTEXTE D'ANALYSE :\nVoici le résultat de l'analyse de l'étape précédente :\n"${ analysisResult }"\nPrends en compte cette analyse pour affiner ou réorienter le plan.`;
   }
 
   let temperatureWarning = '';
@@ -87,7 +88,7 @@ Le système est en surchauffe critique. Les fonctionnalités sont réduites. Pro
   let lucieFragment = '';
   if(context && context.lucieDefraiteur)
   {
-    const {lucieDefraiteur} = context;
+    const {lucieDefraiteur, narrativeState} = context;
     if(lucieDefraiteur.eliInfluence > 0)
     {
       lucieFragment = `
@@ -99,6 +100,11 @@ Mémoire: ${ lucieDefraiteur.memoire }
 État: ${ lucieDefraiteur.etat }
 Énergie: ${ lucieDefraiteur.energie }
 ${ lucieDefraiteur.glitchFactor > 0.5 ? `[GLITCH: Une distorsion temporelle s'insinue dans la séquence. Attendez-vous à l'inattendu.]` : '' }
+
+## Contexte Narratif Actuel :
+Arc: ${ narrativeState.currentArc }
+Motifs Clés: ${ narrativeState.keyMotifs.join(', ') }
+État de Lucie: ${ narrativeState.characterStates.lucie.state } (Éveil: ${ narrativeState.characterStates.lucie.awakeness })
 `;
     }
   }
