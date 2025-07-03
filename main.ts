@@ -4,7 +4,8 @@ import * as readline from 'readline';
 import {demonstrateCursorControl} from './core/utils/ui_utils.js';
 import {OllamaModel} from './core/ollama_interface.js';
 import {parse} from './core/permissive_parser/index.js';
-
+import fs from 'fs';
+import path from 'path';
 
 console.log('☽ LURKUITAE ☾ Terminal Codex Vivant ☾');
 
@@ -15,18 +16,36 @@ const ask = (q: string) => new Promise<string>((res) => rl.question(q, res));
 const args = process.argv.slice(2);
 let model: OllamaModel = OllamaModel.Mistral; // Default model
 let chantModeEnabled: boolean = false;
-let personality: 'lurkuitae' | 'lucie' = 'lurkuitae'; // Default personality
+let personality: string = 'lurkuitae'; // Default personality
+let lifeSystem: any = null;
 
 const modelArgIndex = args.indexOf('--model');
 const chantModeArgIndex = args.indexOf('--chant-mode');
 const modeArgIndex = args.indexOf('--mode');
+const lifeSystemArgIndex = args.indexOf('--life-system');
 
 if(chantModeArgIndex > -1)
 {
   chantModeEnabled = true;
 }
 
-if(modeArgIndex > -1 && args[modeArgIndex + 1])
+if(lifeSystemArgIndex > -1 && args[lifeSystemArgIndex + 1])
+{
+  try
+  {
+    const lifeSystemPath = args[lifeSystemArgIndex + 1];
+    const lifeSystemRaw = fs.readFileSync(lifeSystemPath, 'utf8');
+    const philosophy = lifeSystemRaw;
+    const name = path.basename(lifeSystemPath, '.lifeSystem');
+    lifeSystem = {name, philosophy};
+    personality = name;
+    console.log(`\n🌀 Système de vie personnalisé "${ personality }" chargé.`);
+  } catch(error)
+  {
+    console.error(`\n[ERREUR] Impossible de charger le fichier .lifeSystem : ${ error }`);
+    // Fallback to default
+  }
+} else if(modeArgIndex > -1 && args[modeArgIndex + 1])
 {
   const requestedMode = args[modeArgIndex + 1];
   if(requestedMode === 'lucie')
@@ -53,9 +72,11 @@ try
   const context = getContexteInitial();
   context.chantModeEnabled = chantModeEnabled;
   context.personality = personality;
-  //demonstrateCursorControl(); // Call the demonstration function
-  // Give some time to see the demonstration before the ritual starts
-  //await new Promise(resolve => setTimeout(resolve, 5000));
+  if(lifeSystem)
+  {
+    context.lifeSystem = lifeSystem;
+  }
+
   const testInputs = [
     "create a folder named my_website",
     "go to my_website",

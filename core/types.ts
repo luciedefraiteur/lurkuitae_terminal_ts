@@ -62,8 +62,9 @@ export interface RituelContext
   lastCompletedStepIndex?: number;
   currentDirectoryContent?: string;
   operatingSystem?: string;
-  personality: 'lurkuitae' | 'lucie';
+  personality: string;
   compteur_de_confusion?: number;
+  lifeSystem?: any;
 }
 
 export interface CommandResult

@@ -32,13 +32,15 @@ export function colorize(text: string, color: string): string
   return `${ color }${ text }${ Colors.Reset }`;
 }
 
-function formatBox(title: string, content: string, color: string): string {
+function formatBox(title: string, content: string, color: string): string
+{
   const lines = content.split('\n');
   const maxLength = Math.max(title.length, ...lines.map(line => line.length));
   const horizontalLine = color + '─'.repeat(maxLength + 2) + Colors.Reset;
 
   let output = color + '┌' + title.padEnd(maxLength + 1) + '┐' + Colors.Reset + '\n';
-  lines.forEach(line => {
+  lines.forEach(line =>
+  {
     output += color + '│ ' + line.padEnd(maxLength) + ' │' + Colors.Reset + '\n';
   });
   output += horizontalLine.replace(/┌/g, '└').replace(/┐/g, '┘');
@@ -46,35 +48,45 @@ function formatBox(title: string, content: string, color: string): string {
   return output;
 }
 
-export function displayRitualStepResult(res: any): void {
-  const { étape, index, output, analysis, waited, text, success, exitCode, stderr } = res;
-  const title = `Étape ${index + 1}: ${étape.type}`;
+export function displayRitualStepResult(res: any): void
+{
+  const {étape, index, output, analysis, waited, text, success, exitCode, stderr} = res;
+  const title = `Étape ${ index + 1 }: ${ étape.type }`;
 
-  switch (étape.type) {
+  switch(étape.type)
+  {
     case 'commande':
-      if (success) {
-        console.log(formatBox(`✅ ${title}`, `Commande: ${étape.contenu}\n---\n${output}`, Colors.FgGreen));
-      } else {
-        console.log(formatBox(`❌ ${title}`, `Commande: ${étape.contenu}\n---\nCode: ${exitCode}\nErreur: ${stderr || output}`, Colors.FgRed));
+      if(success)
+      {
+        console.log(formatBox(`✅ ${ title }`, `Commande: ${ étape.contenu }\n---\n${ output }`, Colors.FgGreen));
+      } else
+      {
+        console.log(formatBox(`❌ ${ title }`, `Commande: ${ étape.contenu }\n---\nCode: ${ exitCode }\nErreur: ${ stderr || output }`, Colors.FgRed));
       }
       break;
     case 'analyse':
-      console.log(formatBox(`🧠 ${title}`, analysis, Colors.FgMagenta));
+      console.log(formatBox(`🧠 ${ title }`, analysis, Colors.FgMagenta));
       break;
     case 'attente':
-      console.log(formatBox(`⏳ ${title}`, res.waitMessage || étape.contenu, Colors.FgBlue));
+      console.log(formatBox(`⏳ ${ title }`, res.waitMessage || étape.contenu, Colors.FgBlue));
       break;
     case 'dialogue':
     case 'réponse':
-      console.log(formatBox(`💬 ${title}`, text, Colors.FgWhite));
+      console.log(formatBox(`💬 ${ title }`, text, Colors.FgWhite));
       break;
     default:
-      console.log(formatBox(`- ${title}`, JSON.stringify(res, null, 2), Colors.FgYellow));
+      console.log(formatBox(`- ${ title }`, JSON.stringify(res, null, 2), Colors.FgYellow));
       break;
   }
 }
 
-export function demonstrateCursorControl(): void {
+export function demonstrateCursorControl(): void
+{
+  if(!process.stdout.isTTY)
+  {
+    console.log("[DEMO CURSEUR] Non-TTY, démo annulée.");
+    return;
+  }
   // Clear the screen to make the demo clear
   process.stdout.write('\x1b[2J\x1b[0f'); // Clear screen and move cursor to 0,0
 
@@ -99,19 +111,23 @@ export function demonstrateCursorControl(): void {
 let cursorInterval: NodeJS.Timeout | null = null;
 let cursorState = true;
 
-export function startCursorAnimation() {
-  if (cursorInterval) return;
+export function startCursorAnimation()
+{
+  if(cursorInterval || !process.stdout.isTTY) return;
 
   process.stdout.write(' '); // Initial space to prevent overwriting
-  cursorInterval = setInterval(() => {
+  cursorInterval = setInterval(() =>
+  {
     process.stdout.write(Colors.Reset + (cursorState ? Colors.FgCyan + '█' : ' ') + Colors.Reset);
     process.stdout.cursorTo(process.stdout.columns - 1);
     cursorState = !cursorState;
   }, 500);
 }
 
-export function stopCursorAnimation() {
-  if (cursorInterval) {
+export function stopCursorAnimation()
+{
+  if(cursorInterval && process.stdout.isTTY)
+  {
     clearInterval(cursorInterval);
     cursorInterval = null;
     process.stdout.write(' '); // Clear cursor

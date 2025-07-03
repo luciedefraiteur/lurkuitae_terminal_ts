@@ -2,7 +2,6 @@ import {handleSystemCommand} from './system_handler.js';
 import {OllamaInterface, OllamaModel} from './ollama_interface.js';
 import {generateRitualSequencePrompt} from './prompts/generateRitualSequence.js';
 import {generateAnalysisPrompt} from './prompts/generateAnalysisPrompt.js';
-import {generateErrorRemediationPrompt} from './prompts/generateErrorRemediationPrompt.js';
 import {type RituelContext, type PlanRituel, CommandResult, type Étape} from "./types.js"
 import path from 'path';
 import fs from 'fs';
@@ -10,6 +9,8 @@ import {parse} from './permissive_parser/index.js';
 import {handleChangerDossier, handleCommande, handleAnalyse, handleAttente, handleDialogue, handleQuestion, handleReponse, handleVerificationPreExecution, handleConfirmationUtilisateur, handleGenerationCode, handleInputUtilisateur, handleStepProposal, handleEditionAssistee} from './ritual_step_handlers.js';
 import {Colors, colorize} from './utils/ui_utils.js';
 import {generateRemediationPrompt} from './prompts/generateRemediationPlan.js';
+import {fileURLToPath} from 'url';
+import {Personas} from './personas.js';
 
 export function getContexteInitial(): RituelContext
 {
@@ -17,9 +18,9 @@ export function getContexteInitial(): RituelContext
     historique: [],
     command_input_history: [],
     command_output_history: [],
-    step_results_history: [], // Initialisation de l'historique des résultats d'étapes
+    step_results_history: [],
     current_directory: process.cwd(),
-    temperatureStatus: 'normal', // Default initial status
+    temperatureStatus: 'normal',
     lucieDefraiteur: {
       lastCommandExecuted: '',
       lastCommandOutput: '',
@@ -89,30 +90,30 @@ export async function safeQuery(prompt: string, label: string, model?: OllamaMod
 
 export async function generateRituel(input: string, context: RituelContext, model?: OllamaModel, analysisResult?: string, startingIndex?: number): Promise<PlanRituel | null>
 {
-  const planPrecedent = context.historique.at(-1)?.plan;
-  const indexPrecedent = planPrecedent?.index ?? undefined;
-  const prompt = generateRitualSequencePrompt(input, planPrecedent, indexPrecedent, context, analysisResult, startingIndex);
-  const response = await safeQuery(prompt, 'planification', model);
+  // 1. Génération de l'intention en langage naturel
+  const naturalLanguagePrompt = generateRitualSequencePrompt(input, context.historique.at(-1)?.plan, context.historique.at(-1)?.plan?.index, context, analysisResult, startingIndex);
+  const naturalLanguagePlan = await safeQuery(naturalLanguagePrompt, 'natural_plan_generation', model);
+  console.log(colorize(`\n🌀 Intention générée:\n${ naturalLanguagePlan }`, Colors.FgBlue));
 
-  const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+  // 2. Traduction de l'intention en JSON
+  const translationPromptTemplate = fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), './prompts/static_parts/translate_to_json.promptPart'), 'utf8');
+  const persona = Personas.Logician(context);
+  let translationPrompt = translationPromptTemplate.replace('{{naturalLanguagePlan}}', naturalLanguagePlan);
+  translationPrompt = translationPrompt.replace('{{os}}', context.operatingSystem || 'inconnu');
+  translationPrompt = `${ persona }\n\n${ translationPrompt }`;
+  const jsonPlanString = await safeQuery(translationPrompt, 'json_translation', model);
 
-  if(!jsonMatch || !jsonMatch[1])
-  {
-    console.error(`[ERREUR PARSING RITUEL] Aucun bloc de code JSON trouvé dans la réponse de l'IA. Réponse brute: "${ response }"`);
-    return null;
-  }
-
-  const jsonString = jsonMatch[1].trim();
-
+  // 3. Parsing du JSON final
   try
   {
-    return parse(jsonString);
+    return parse(jsonPlanString);
   } catch(e: any)
-  { // Catch the error to log it
-    console.error(`[ERREUR PARSING RITUEL] Échec de l'analyse du plan rituel: ${ e.message || e }. Input: "${ jsonString }"`);
+  {
+    console.error(`[ERREUR PARSING FINAL] Échec de l'analyse du plan JSON traduit: ${ e.message || e }. Input: "${ jsonPlanString }"`);
     return null;
   }
 }
+
 
 const defaultStepHandlers = {
   handleChangerDossier,
@@ -206,14 +207,12 @@ export async function executeRituelPlan(
 
     resultats.push(result);
     context.step_results_history.push(result);
-    // Capture all possible outputs, including errors
     plan.étapes[i].output = result.output || result.analysis || result.text || result.waited || result.remediationResults || result.stderr || result.error;
     context.lastCompletedStepIndex = i;
 
-    // Check for command failure
     if(result.success === false)
     {
-      plan.étapes[i].fait = 'non'; // Mark as failed, not done
+      plan.étapes[i].fait = 'non';
       console.log(colorize(`\n🔥 Échec de l'étape. Invocation du rituel de remédiation...`, Colors.FgRed));
 
       const remediationPrompt = generateRemediationPrompt(étape, result.output || result.stderr, context);
@@ -230,13 +229,8 @@ export async function executeRituelPlan(
             complexité: 'simple',
             index: 0
           };
-          // Execute the remediation plan. This is a recursive call, but on a separate, smaller plan.
           await executeRituelPlan(remediationPlan, context, ask);
-
-          // After remediation, we can decide whether to retry the failed step or stop.
-          // For now, we'll just log it and continue, effectively skipping the failed step.
           console.log(colorize(`\n✅ Rituel de remédiation terminé.`, Colors.FgGreen));
-
         }
       } catch(e)
       {
@@ -245,10 +239,7 @@ export async function executeRituelPlan(
 
     } else
     {
-      plan.étapes[i].fait = 'oui'; // Mark as successful
-      // If the successful step was an analysis, trigger re-planning
-      // If the successful step was an analysis, stop execution here.
-      // The main loop in runTerminalRituel will handle the re-planning.
+      plan.étapes[i].fait = 'oui';
       if(étape.type === 'analyse' && result.analysis)
       {
         console.log(colorize(`\n✨ Analyse terminée. Retour à la boucle principale pour la replanification...`, Colors.FgMagenta));

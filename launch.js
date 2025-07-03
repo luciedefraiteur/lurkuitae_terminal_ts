@@ -18,6 +18,11 @@ async function main() {
             type: 'string',
             description: 'The Ollama model to use',
         })
+        .option('life-system', {
+            alias: 'l',
+            type: 'string',
+            description: 'Path to a .lifeSystem JSON file to load a custom personality.'
+        })
         .help()
         .alias('help', 'h')
         .argv;
@@ -70,6 +75,10 @@ async function main() {
         '--model',
         model
     ];
+
+    if (argv.lifeSystem) {
+        args.push('--life-system', argv.lifeSystem);
+    }
 
     console.log(`\nExecuting: ${command} ${args.join(' ')}\n`);
 
