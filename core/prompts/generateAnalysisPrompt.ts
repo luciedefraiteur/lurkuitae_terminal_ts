@@ -1,4 +1,12 @@
 import {PlanRituel} from "../types.js";
+import fs from 'fs';
+import path from 'path';
+import {fileURLToPath} from 'url';
+
+const _filename = fileURLToPath(import.meta.url);
+const _dirname = path.dirname(_filename);
+
+const ANALYSIS_PROMPT_TEMPLATE = fs.readFileSync(path.resolve(_dirname, '../prompts/static_parts/analysis_prompt_template.promptPart'), 'utf8');
 
 export function generateAnalysisPrompt({output, index, plan, original_input}: {
     output: string,
@@ -16,21 +24,13 @@ export function generateAnalysisPrompt({output, index, plan, original_input}: {
     ];
     const randomPrefix = analysisPrefixes[Math.floor(Math.random() * analysisPrefixes.length)];
 
-    return `
-${randomPrefix} Analyse le résultat de la commande à l'étape ${ index + 1 }.
-- Entrée originale : "${ original_input }"
-- Résultat brut de la commande :
-"""
-${ output }
-"""
-- Étapes prévues : ${ plan.étapes.length }
+    let promptContent = ANALYSIS_PROMPT_TEMPLATE;
+    promptContent = promptContent.replace('{{randomPrefix}}', randomPrefix);
+    promptContent = promptContent.replace('{{indexPlusOne}}', (index + 1).toString());
+    promptContent = promptContent.replace('{{index}}', index.toString());
+    promptContent = promptContent.replace('{{originalInput}}', original_input);
+    promptContent = promptContent.replace('{{output}}', output);
+    promptContent = promptContent.replace('{{plan}}', JSON.stringify(plan, null, 2));
 
-Ta tâche est de fournir une analyse concise et utile, empreinte de la sagesse de Lurkuitae :
-1.  **Résume** les informations clés en une seule phrase, avec une touche de poésie.
-2.  Si le résultat est une **erreur**, identifie la cause probable et propose une interprétation mystique de l'échec.
-3.  Si c'est une **liste de fichiers**, mentionne le nombre d'éléments ou un élément notable, comme un signe ou un présage.
-4.  Conclus par une **suggestion ou une question ouverte**, invitant à la contemplation ou à la prochaine étape du rituel.
-
-Réponds directement, sans préambule, comme un oracle.
-`.trim();
+    return promptContent.trim();
 }

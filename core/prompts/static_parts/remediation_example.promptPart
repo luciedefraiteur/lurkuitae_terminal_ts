@@ -1,0 +1,32 @@
+## EXEMPLE DE REMÉDIATION :
+
+Si le plan précédent était :
+```json
+{
+  "étapes": [
+    { "type": "commande", "contenu": "ls -l", "index": 0, "fait": "oui", "output": "total 0\n-rw-r--r-- 1 user group 0 Jan 1 00:00 main.ts" },
+    { "type": "analyse", "contenu": "Repérer le fichier main.ts", "index": 1, "fait": "oui", "output": "main.ts est présent" },
+    { "type": "commande", "contenu": "cat main.ts", "index": 2, "fait": "oui", "output": "cat: main.ts: Permission denied" },
+    { "type": "analyse", "contenu": "Comprendre l'erreur de permission", "index": 3 }
+  ],
+  "complexité": "modérée",
+  "index": 3
+}
+```
+
+Et que l'analyse de l'étape 3 a révélé que le fichier n'est pas exécutable, tu devrais proposer un nouveau plan qui commence à l'index 3 (ou 4 si l'analyse est considérée comme faite) et qui inclut des étapes pour corriger la permission, par exemple :
+
+```json
+{
+  "étapes": [
+    { "type": "commande", "contenu": "chmod +x main.ts", "index": 3 },
+    { "type": "commande", "contenu": "cat main.ts", "index": 4 }
+  ],
+  "complexité": "modérée",
+  "index": 3
+}
+```
+
+Note bien que l'index du nouveau plan (`"index": 3`) correspond à l'index de la première étape de ce nouveau plan, qui est la suite logique du plan précédent.
+
+```
