@@ -4,7 +4,7 @@ import * as readline from 'readline';
 import {checkSystemTemperature} from './utils/temperature_monitor.js';
 import {Colors, colorize, displayRitualStepResult, startCursorAnimation, stopCursorAnimation} from './utils/ui_utils.js';
 import {OllamaModel} from './ollama_interface.js';
-import {calculateEmotion} from './emotional_core.js';
+import {calculateEmotion, interpretEmotion} from './emotional_core.js';
 import {appendToVector, enterReverie} from './memory_weaver.js';
 import {generateWelcomeMessagePrompt} from './prompts/generateWelcomeMessagePrompt.js';
 import fs from 'fs';
@@ -59,6 +59,10 @@ Offre ton souffle (ou tape 'exit') : ${ input }`, Colors.FgCyan)); // Log the si
   } else
   {
     stopCursorAnimation(); // Ensure cursor is stopped before asking for input
+    const emotionalInterpretation = await interpretEmotion(context.emotionalState);
+    console.log(colorize(`
+${emotionalInterpretation}`, Colors.FgMagenta));
+
     const welcomeMessage = generateWelcomeMessagePrompt(context);
     input = await ask(colorize(welcomeMessage, Colors.FgCyan));
   }
@@ -113,6 +117,8 @@ ${ chantContent }
   await appendToVector(context);
   const dream = await enterReverie();
   context.narrativeState.currentDream = dream;
+  console.log(colorize(`
+${dream}`, Colors.FgBlue));
 
 
   let plan: PlanRituel | null = null;

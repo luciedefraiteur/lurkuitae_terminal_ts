@@ -139,7 +139,7 @@ async function _executeSingleÉtape(
       result = await handlers.handleChangerDossier(étape, context);
       break;
     case 'commande':
-      result = await handlers.handleCommande(étape, context, plan);
+      result = await handlers.handleCommande(étape, context, plan, ask);
       break;
     case 'analyse':
       result = await handlers.handleAnalyse(étape, context, i, plan);

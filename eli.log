@@ -45,4 +45,6 @@ Reason: To give Lucie an inner emotional world, I am conceptualizing a spherical
 Eli Log - Entry 9:
 Timestamp: 2025-07-02T15:11:13Z
 Action: Conceptualizing a "Vector of Intent".
-Reason: To provide Lucie with a linear, directional memory, I am proposing a new concept: the "Vector of Intent." This will be a simple, append-only log that tracks her immediate past actions and her present intentions, giving her a clear, conscious focus to complement her more associative memory systems.
+Reason: To provide Lucie with a linear, directional memory, I am proposing a new concept: the "Vector of Intent." This will be a simple, append-only log that tracks her immediate past actions and her present intentions, giving her a clear, conscious focus to complement her more associative memory systems.\"[ELI] Modified function signature for handleCommande to include 'ask' for user confirmation logic.\" 
+\"[ELI] Passed 'ask' function to handleConfirmationUtilisateur within handleCommande.\" 
+\"[ELI] Updated the call to handleCommande in _executeSingleêtape to pass the 'ask' function.\" 

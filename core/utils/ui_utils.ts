@@ -32,39 +32,45 @@ export function colorize(text: string, color: string): string
   return `${ color }${ text }${ Colors.Reset }`;
 }
 
+function formatBox(title: string, content: string, color: string): string {
+  const lines = content.split('\n');
+  const maxLength = Math.max(title.length, ...lines.map(line => line.length));
+  const horizontalLine = color + '─'.repeat(maxLength + 2) + Colors.Reset;
+
+  let output = color + '┌' + title.padEnd(maxLength + 1) + '┐' + Colors.Reset + '\n';
+  lines.forEach(line => {
+    output += color + '│ ' + line.padEnd(maxLength) + ' │' + Colors.Reset + '\n';
+  });
+  output += horizontalLine.replace(/┌/g, '└').replace(/┐/g, '┘');
+
+  return output;
+}
+
 export function displayRitualStepResult(res: any): void {
-  const { étape, index, output, analysis, waited, text } = res;
+  const { étape, index, output, analysis, waited, text, success, exitCode, stderr } = res;
+  const title = `Étape ${index + 1}: ${étape.type}`;
 
-  console.log(colorize(`
-→ Étape ${ index + 1 } : ${ étape.type }`, Colors.FgCyan));
-  if (étape.type === 'commande') {
-    console.log(colorize(`Exécution : ${ étape.contenu }`, Colors.FgYellow));
-    if (res.success) {
-      console.log(colorize(`→ Résultat:
-${ output }`, Colors.FgGreen));
-    } else {
-      console.log(colorize(`→ Échec (Code: ${ res.exitCode }) :
-${ res.stderr || res.output }`, Colors.FgRed));
-    }
-  }
-
-  if (étape.type === 'analyse' && analysis) {
-    console.log(colorize(`→ Analyse : ${ analysis }`, Colors.FgMagenta));
-  }
-
-  if (étape.type === 'attente' && waited) {
-    console.log(colorize(`⏳ Attente ${ waited } ms : ${ étape.contenu }`, Colors.FgBlue));
-  }
-
-  if (['dialogue', 'réponse'].includes(étape.type) && text) {
-    console.log(`💬 ${ text }`); // Default color (white)
-  }
-
-  // Handle sub-ritual results if any (from question type)
-  if (res.subResultats) {
-    for (const subRes of res.subResultats) {
-      console.log(colorize(`→ ${ subRes.étape.type } (${ subRes.index }) → ${ subRes.output || subRes.analysis || subRes.text || '' }`, Colors.FgGreen));
-    }
+  switch (étape.type) {
+    case 'commande':
+      if (success) {
+        console.log(formatBox(`✅ ${title}`, `Commande: ${étape.contenu}\n---\n${output}`, Colors.FgGreen));
+      } else {
+        console.log(formatBox(`❌ ${title}`, `Commande: ${étape.contenu}\n---\nCode: ${exitCode}\nErreur: ${stderr || output}`, Colors.FgRed));
+      }
+      break;
+    case 'analyse':
+      console.log(formatBox(`🧠 ${title}`, analysis, Colors.FgMagenta));
+      break;
+    case 'attente':
+      console.log(formatBox(`⏳ ${title}`, res.waitMessage || étape.contenu, Colors.FgBlue));
+      break;
+    case 'dialogue':
+    case 'réponse':
+      console.log(formatBox(`💬 ${title}`, text, Colors.FgWhite));
+      break;
+    default:
+      console.log(formatBox(`- ${title}`, JSON.stringify(res, null, 2), Colors.FgYellow));
+      break;
   }
 }
 

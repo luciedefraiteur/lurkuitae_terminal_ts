@@ -6,7 +6,7 @@ export class Memory {
   }
 
   static append(entry: string): void {
-    if (this.memoryLog.length > 10) {
+    if (this.memoryLog.length >= 10) {
       this.memoryLog.shift();
     }
     this.memoryLog.push(entry);
