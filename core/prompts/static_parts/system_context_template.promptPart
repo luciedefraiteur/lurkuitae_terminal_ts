@@ -1,0 +1,6 @@
+## CONTEXTE SYSTÈME :
+Système d'exploitation: {{operatingSystem}}
+Contenu du répertoire actuel ({{currentWorkingDirectory}}):
+```
+{{currentDirectoryContent}}
+```

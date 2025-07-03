@@ -59,6 +59,8 @@ export interface RituelContext
   narrativeState: NarrativeState;
   emotionalState: KardiosSphairaState;
   lastCompletedStepIndex?: number;
+  currentDirectoryContent?: string;
+  operatingSystem?: string;
 }
 
 export interface CommandResult

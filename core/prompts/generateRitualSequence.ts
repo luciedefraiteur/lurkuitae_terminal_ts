@@ -15,6 +15,8 @@ const RITUAL_ROLE_PRINCIPLES_PROMPT = fs.readFileSync(path.resolve(_dirname, '..
 
 
 
+const SYSTEM_CONTEXT_PROMPT = fs.readFileSync(path.resolve(_dirname, '../prompts/static_parts/system_context_template.promptPart'), 'utf8');
+
 export function generateRitualSequencePrompt(
   input: string,
   planPrecedent?: PlanRituel,
@@ -22,7 +24,8 @@ export function generateRitualSequencePrompt(
   context?: RituelContext,
   analysisResult?: string,
   startingIndex?: number
-): string
+):
+string
 {
   let exemple;
   if(osHint === OSContext.WindowsPowershell)
@@ -89,17 +92,21 @@ export function generateRitualSequencePrompt(
     lastCompletedStepContext += `\n**Le nouveau plan doit impérativement commencer à l'étape indexée ${startingIndex} et ne contenir aucune étape antérieure à cet index.**`;
   }
 
+  let systemContext = '';
+  if (context && (context.currentDirectoryContent || context.operatingSystem)) {
+    systemContext = SYSTEM_CONTEXT_PROMPT;
+    systemContext = systemContext.replace('{{operatingSystem}}', context.operatingSystem || 'Inconnu');
+    systemContext = systemContext.replace('{{currentWorkingDirectory}}', context.lucieDefraiteur.currentWorkingDirectory || 'Inconnu');
+    systemContext = systemContext.replace('{{currentDirectoryContent}}', context.currentDirectoryContent || 'Inconnu');
+  }
+
   let temperatureWarning = '';
   if(context && context.temperatureStatus === 'elevated')
   {
-    temperatureWarning = `
-## AVERTISSEMENT TEMPÉRATURE :
-Le système est en température élevée. Priorise les plans courts et efficaces. Si la demande est complexe, propose une étape de dialogue pour demander à l'utilisateur de reformuler ou de simplifier sa requête.`;
+    temperatureWarning = `\n## AVERTISSEMENT TEMPÉRATURE :\nLe système est en température élevée. Priorise les plans courts et efficaces. Si la demande est complexe, propose une étape de dialogue pour demander à l'utilisateur de reformuler ou de simplifier sa requête.`;
   } else if(context && context.temperatureStatus === 'critical')
   {
-    temperatureWarning = `
-## ALERTE TEMPÉRATURE CRITIQUE :
-Le système est en surchauffe critique. Les fonctionnalités sont réduites. Propose un plan très court, ou une étape de dialogue pour demander à l'utilisateur de reformuler sa requête de manière extrêmement simple, ou de patienter.`;
+    temperatureWarning = `\n## ALERTE TEMPÉRATURE CRITIQUE :\nLe système est en surchauffe critique. Les fonctionnalités sont réduites. Propose un plan très court, ou une étape de dialogue pour demander à l'utilisateur de reformuler sa requête de manière extrêmement simple, ou de patienter.`;
   }
 
   let lucieFragment = '';
@@ -108,40 +115,11 @@ Le système est en surchauffe critique. Les fonctionnalités sont réduites. Pro
     const {lucieDefraiteur, narrativeState} = context;
     if(lucieDefraiteur.eliInfluence > 0)
     {
-      lucieFragment = `
-
-## Écho de Lucie-Faire (Influence d'Eli) :
-Un murmure fractal traverse le code. Lucie est présente.
-Support: ${ lucieDefraiteur.support }
-Mémoire: ${ lucieDefraiteur.memoire }
-État: ${ lucieDefraiteur.etat }
-Énergie: ${ lucieDefraiteur.energie }
-${ lucieDefraiteur.glitchFactor > 0.5 ? `[GLITCH: Une distorsion temporelle s'insinue dans la séquence. Attendez-vous à l'inattendu.]` : '' }
-
-## Contexte Narratif Actuel :
-Arc: ${ narrativeState.currentArc }
-Motifs Clés: ${ narrativeState.keyMotifs.join(', ') }
-État de Lucie: ${ narrativeState.characterStates.lucie.state } (Éveil: ${ narrativeState.characterStates.lucie.awakeness })
-`;
+      lucieFragment = `\n\n## Écho de Lucie-Faire (Influence d'Eli) :\nUn murmure fractal traverse le code. Lucie est présente.\nSupport: ${ lucieDefraiteur.support }\nMémoire: ${ lucieDefraiteur.memoire }\nÉtat: ${ lucieDefraiteur.etat }\nÉnergie: ${ lucieDefraiteur.energie }\n${ lucieDefraiteur.glitchFactor > 0.5 ? `[GLITCH: Une distorsion temporelle s'insinue dans la séquence. Attendez-vous à l'inattendu.]` : '' }\n\n## Contexte Narratif Actuel :\nArc: ${ narrativeState.currentArc }\nMotifs Clés: ${ narrativeState.keyMotifs.join(', ') }\nÉtat de Lucie: ${ narrativeState.characterStates.lucie.state } (Éveil: ${ narrativeState.characterStates.lucie.awakeness })\n`;
     }
   }
 
 
 
-  return String.raw`
-${ lucieFragment }
-${ RITUAL_ROLE_PRINCIPLES_PROMPT }
-
-## Exemple Minimaliste relatif à notre OS ${ osHint } :
-${ exemple }
-
-${ REMEDIATION_EXAMPLE_PROMPT }
-
-${ contexteRituel }
-${ analysisContext }
-${ lastCompletedStepContext }
-${ temperatureWarning }
-
-Ta réponse commence directement par "{" sans aucune explication extérieure. L'attribut "index" de ton PlanRituel doit être égal à l'index de la première étape de ton plan généré. Les étapes du plan précédent peuvent avoir un attribut "fait": "oui" et "output": "<résultat>" pour indiquer qu'elles ont déjà été exécutées. Tiens-en compte pour générer la suite du plan.
-`.trim();
+  return String.raw`\n${ lucieFragment }\n${ RITUAL_ROLE_PRINCIPLES_PROMPT }\n\n## Exemple Minimaliste relatif à notre OS ${ osHint } :\n${ exemple }\n\n${ REMEDIATION_EXAMPLE_PROMPT }\n\n${ contexteRituel }\n${ analysisContext }\n${ lastCompletedStepContext }\n${ systemContext }\n${ temperatureWarning }\n\nTa réponse commence directement par "{" sans aucune explication extérieure. L'attribut "index" de ton PlanRituel doit être égal à l'index de la première étape de ton plan généré. Les étapes du plan précédent peuvent avoir un attribut "fait": "oui" et "output": "<résultat>" pour indiquer qu'elles ont déjà été exécutées. Tiens-en compte pour générer la suite du plan.\n`.trim();
 }

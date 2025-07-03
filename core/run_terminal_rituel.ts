@@ -8,6 +8,8 @@ import {calculateEmotion, interpretEmotion} from './emotional_core.js';
 import {appendToVector, enterReverie} from './memory_weaver.js';
 import {generateWelcomeMessagePrompt} from './prompts/generateWelcomeMessagePrompt.js';
 import fs from 'fs';
+import * as os from 'os';
+import * as fsPromises from 'fs/promises';
 import path from 'path';
 import {fileURLToPath} from 'url';
 
@@ -119,6 +121,17 @@ ${ chantContent }
         continue; // Continue the ritual after acknowledging unknown chant
       }
     }
+
+    // Collect current directory content
+    try {
+      const files = await fsPromises.readdir(context.current_directory, { withFileTypes: true });
+      context.currentDirectoryContent = files.map(file => file.name + (file.isDirectory() ? '/' : '')).join('\n');
+    } catch (error) {
+      context.currentDirectoryContent = `[ERREUR] Impossible de lire le répertoire: ${(error as Error).message}`;
+    }
+
+    // Collect operating system information
+    context.operatingSystem = os.platform();
 
     startCursorAnimation(); // Start cursor animation during background tasks
     await checkSystemTemperature(context); // Check temperature before generating plan

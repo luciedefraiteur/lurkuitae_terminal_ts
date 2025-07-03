@@ -51,6 +51,11 @@ Reason: The previous `apply_diff` failed. I will now read the file to get the la
 Zed Log - Entry 17:
 Timestamp: 2025-07-02T15:25:47Z
 Action: Retrying the correction of the emotional core test after a failed `apply_diff`.
-Reason: The `apply_diff` failed again. I will now read the file to get the latest version and then perform a full `write_to_file` to ensure the hoisting issue is resolved.\"[ZED] Analyzing ui_utils.ts to improve visual clarity of ritual step results.\" 
-\"[ZED] Replaced displayRitualStepResult with a new version using formatted boxes for better readability.\" 
-\"[ZED] Analyzing ollama_auto_correction.test.ts to fix the failing tests.\" 
+Reason: The `apply_diff` failed again. I will now read the file to get the latest version and then perform a full `write_to_file` to ensure the hoisting issue is resolved."[ZED] Analyzing ui_utils.ts to improve visual clarity of ritual step results." 
+"[ZED] Replaced displayRitualStepResult with a new version using formatted boxes for better readability." 
+"[ZED] Analyzing ollama_auto_correction.test.ts to fix the failing tests." 
+
+Zed Log - Entry 18:
+Timestamp: 2025-07-03T02:30:00Z
+Action: Enhancing test reporting for neuro-cognitive analysis.
+Reason: To provide deeper insights into code behavior, I have modified the `runTest` functions in `memory.test.ts` and `memory_weaver.test.ts`. These now capture and display more detailed error information, including dissonance messages, expected/received values, and stack traces, facilitating a neuro-cognitive analysis of test failures.

@@ -97,7 +97,12 @@ Reason: The creation of the `appendToVector` function requires a new type defini
 Alma Log - Entry 21:
 Timestamp: 2025-07-02T15:32:13Z
 Action: Finalizing the integration of the new memory and emotional systems.
-Reason: I will now resolve the final type errors by adding the necessary imports to `run_terminal_rituel.ts` and updating the `NarrativeState` interface.\"[ALMA] Reading run_terminal_rituel.ts to integrate the emotional state into the welcome message.\" 
-\"[ALMA] Added emotional state interpretation to the welcome message in run_terminal_rituel.ts.\" 
-\"[ALMA] Imported interpretEmotion in run_terminal_rituel.ts.\" 
-\"[ALMA] Displayed the result of enterReverie in run_terminal_rituel.ts to materialize the 'dream'.\" 
+Reason: I will now resolve the final type errors by adding the necessary imports to `run_terminal_rituel.ts` and updating the `NarrativeState` interface."[ALMA] Reading run_terminal_rituel.ts to integrate the emotional state into the welcome message." 
+"[ALMA] Added emotional state interpretation to the welcome message in run_terminal_rituel.ts." 
+"[ALMA] Imported interpretEmotion in run_terminal_rituel.ts." 
+"[ALMA] Displayed the result of enterReverie in run_terminal_rituel.ts to materialize the 'dream'." 
+
+Alma Log - Entry 22:
+Timestamp: 2025-07-03T02:30:00Z
+Action: Refining prompt engineering for enhanced ritual progression and user interaction.
+Reason: To address the issue of redundant steps and improve Lucie's understanding of ritual state, I have refined the prompt generation in `generateRitualSequencePrompt`. This includes explicit instructions for `PlanRituel` indexing, marking completed steps with `fait: "oui"` and `output`, and providing detailed remediation examples. This ensures Lucie generates more precise and non-redundant plans, adapting fluidly to the ritual's progression and user input.

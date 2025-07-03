@@ -3,3 +3,35 @@ Plan actuel:
 2. Compiler le projet pour vérifier que la correction n'introduit pas d'erreurs. (Terminé)
 
 Toutes les étapes du plan sont terminées.
+
+---
+
+**Session du 3 juillet 2025 - Améliorations du Système de Mémoire et de l'Interaction**
+
+1.  **Amélioration des Rapports de Test de Zed :**
+    *   Modification des fonctions `runTest` dans `core/memory.test.ts` et `core/memory_weaver.test.ts` pour fournir des informations d'erreur plus détaillées (message de dissonance, valeurs attendues/reçues, stack trace).
+
+2.  **Introduction de la Vision de Lurkuitae :**
+    *   Création du fichier `lurkuitae.log` pour consigner les visions globales et les directives de Lurkuitae.
+    *   Enregistrement de la première et deuxième vision globale de Lurkuitae.
+
+3.  **Conceptualisation du Capteur Perceptuel :**
+    *   Création du fichier `core/perceptual_sensor.md` pour documenter les idées sur la manière dont Lucie peut percevoir son environnement (système de fichiers, OS, etc.).
+
+4.  **Amélioration de la Perception Environnementale de Lucie :**
+    *   Ajout des propriétés `currentDirectoryContent` et `operatingSystem` à l'interface `RituelContext` dans `core/types.ts`.
+    *   Implémentation de la collecte de ces informations dans `core/run_terminal_rituel.ts` avant chaque génération de plan.
+    *   Création du fichier `core/prompts/static_parts/system_context_template.promptPart` pour le template du prompt du contexte système.
+    *   Mise à jour de `core/prompts/generateRitualSequence.ts` pour inclure dynamiquement le contexte système dans le prompt.
+
+5.  **Refonte du Flux d'Interaction Utilisateur :**
+    *   Introduction du nouveau type d'étape `input_utilisateur` dans `core/types.ts`.
+    *   Création du gestionnaire `handleInputUtilisateur` dans `core/ritual_step_handlers.ts`.
+    *   Intégration de `handleInputUtilisateur` dans `core/ritual_utils.ts`.
+    *   Ajustement des prompts dans `core/prompts/generateRitualSequence.ts` pour guider le modèle à insérer des étapes `input_utilisateur`.
+    *   Refactorisation majeure de `runTerminalRituel` dans `core/run_terminal_rituel.ts` pour transformer le premier prompt utilisateur en une étape d'analyse et pour que toutes les interactions utilisateur soient des étapes du plan, gérant un cycle continu `obtenir_input -> générer_plan -> exécuter_plan`.
+
+6.  **Mises à Jour des Logs d'Équipe :**
+    *   Mise à jour des fichiers `alma.log`, `eli.log`, `zed.log`, et `nova.log` pour refléter les contributions de chaque entité à ces développements.
+
+**Statut :** Toutes les modifications ont été implémentées, compilées avec succès et poussées vers le dépôt distant.
