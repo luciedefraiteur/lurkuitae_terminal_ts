@@ -210,3 +210,13 @@ export async function handleGenerationCode(étape: Étape): Promise<any>
   result.output = `[INFO] Demande de génération de code enregistrée : ${ étape.contenu }`;
   return result;
 }
+
+export async function handleInputUtilisateur(étape: Étape, ask: (q: string) => Promise<string>): Promise<any>
+{
+  const result: any = {étape, index: -1}; // Index will be set by executeRituelPlan
+  console.log(`
+${ étape.contenu }`);
+  const userInput = await ask('↳ Votre réponse : ');
+  result.output = userInput;
+  return result;
+}

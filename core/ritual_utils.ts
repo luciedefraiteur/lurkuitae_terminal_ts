@@ -7,7 +7,7 @@ import {type RituelContext, type PlanRituel, CommandResult} from "./types.js"
 import path from 'path';
 import fs from 'fs';
 import {parse} from './permissive_parser/index.js';
-import {handleChangerDossier, handleCommande, handleAnalyse, handleAttente, handleDialogue, handleQuestion, handleReponse, handleVerificationPreExecution, handleConfirmationUtilisateur, handleGenerationCode} from './ritual_step_handlers.js';
+import {handleChangerDossier, handleCommande, handleAnalyse, handleAttente, handleDialogue, handleQuestion, handleReponse, handleVerificationPreExecution, handleConfirmationUtilisateur, handleGenerationCode, handleInputUtilisateur} from './ritual_step_handlers.js';
 import {Colors, colorize} from './utils/ui_utils.js';
 
 export function getContexteInitial(): RituelContext
@@ -120,6 +120,7 @@ const defaultStepHandlers = {
   handleVerificationPreExecution,
   handleConfirmationUtilisateur,
   handleGenerationCode,
+  handleInputUtilisateur,
 };
 
 async function _executeSingleÉtape(
@@ -164,6 +165,9 @@ async function _executeSingleÉtape(
       break;
     case 'génération_code':
       result = await handlers.handleGenerationCode(étape);
+      break;
+    case 'input_utilisateur':
+      result = await handlers.handleInputUtilisateur(étape, ask);
       break;
   }
   return result;

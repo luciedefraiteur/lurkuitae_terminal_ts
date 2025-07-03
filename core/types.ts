@@ -1,6 +1,6 @@
 export interface Étape
 {
-  type: 'commande' | 'analyse' | 'attente' | 'dialogue' | 'question' | 'réponse' | 'changer_dossier' | 'vérification_pré_exécution' | 'confirmation_utilisateur' | 'génération_code';
+  type: 'commande' | 'analyse' | 'attente' | 'dialogue' | 'question' | 'réponse' | 'changer_dossier' | 'vérification_pré_exécution' | 'confirmation_utilisateur' | 'génération_code' | 'input_utilisateur';
   contenu: string;
   durée_estimée?: string;
   fait?: 'oui';

@@ -67,7 +67,12 @@ export function generateRitualSequencePrompt(
   const contexteRituel =
     planPrecedent && indexCourant !== undefined
       ? `## CONTEXTE RITUEL :\n- Voici le plan précédent (à continuer, compléter, ou réinterpréter) :\n${ JSON.stringify(planPrecedent, null, 2) }\n\n- Tu es actuellement à l’étape indexée : ${ indexCourant }\n\n- L’utilisateur vient de répondre ou reformulé son intention :\n"${ input }"\n\nTu dois adapter ou reprendre la planification en respectant ce contexte. Si le plan précédent est déjà bon, continue logiquement. Sinon, propose mieux.`
-      : `## Transformation Requise :\nAnalyse la demande suivante et génère la séquence rituelle optimale :\n"${ input }"`;
+      : `## Transformation Requise :\nAnalyse l'intention initiale de l'utilisateur et génère la séquence rituelle optimale :\n"${ input }"`;
+
+  let inputUserInstruction = '';
+  if (!planPrecedent) {
+    inputUserInstruction = `\n**Note :** Si tu as besoin d'informations supplémentaires de l'utilisateur, insère une étape de type \"input_utilisateur\" avec le contenu de la question à poser.`;
+  }
 
   let analysisContext = '';
   if(analysisResult)
