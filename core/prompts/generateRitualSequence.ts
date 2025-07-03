@@ -8,7 +8,11 @@ import {fileURLToPath} from 'url';
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = path.dirname(_filename);
 
-const RITUAL_ROLE_PRINCIPLES_PROMPT = fs.readFileSync(path.resolve(_dirname, '../prompts/static_parts/ritual_role_principles.promptPart'), 'utf8');
+const RITUAL_STEP_TYPES_PROMPT = fs.readFileSync(path.resolve(_dirname, '../prompts/static_parts/ritual_step_types.promptPart'), 'utf8');
+const LUCIE_ROLE_PROMPT = fs.readFileSync(path.resolve(_dirname, '../prompts/static_parts/lucie_role.promptPart'), 'utf8');
+const LURKUITAE_ROLE_PROMPT = fs.readFileSync(path.resolve(_dirname, '../prompts/static_parts/lurkuitae_role.promptPart'), 'utf8');
+
+const EVOLUTION_PROMPT = `\n## PROTOCOLE D'ÉVOLUTION\nPour répondre à la demande de l'utilisateur, utilise en priorité les étapes de base que tu connais. Si une capacité spécifique te manque (par exemple, analyser un type de fichier particulier), tu es autorisée à insérer une seule étape de type \`step_proposal\`. Dans le \`contenu\` de cette étape, décris la nouvelle capacité dont tu as besoin. Continue ensuite le rituel avec les étapes de base.`;
 
 
 
@@ -25,7 +29,7 @@ export function generateRitualSequencePrompt(
   analysisResult?: string,
   startingIndex?: number
 ):
-string
+  string
 {
   let exemple;
   if(osHint === OSContext.WindowsPowershell)
@@ -73,27 +77,35 @@ string
       : `## Transformation Requise :\nAnalyse l'intention initiale de l'utilisateur et génère la séquence rituelle optimale :\n"${ input }"`;
 
   let inputUserInstruction = '';
-  if (!planPrecedent) {
+  if(!planPrecedent)
+  {
     inputUserInstruction = `\n**Note :** Si tu as besoin d'informations supplémentaires de l'utilisateur, insère une étape de type \"input_utilisateur\" avec le contenu de la question à poser.`;
   }
 
   let analysisContext = '';
-  if(analysisResult)
+  if(analysisResult && startingIndex !== undefined)
   {
-    analysisContext = `\n## CONTEXTE D'ANALYSE :\nVoici le résultat de l'analyse de l'étape précédente :\n"${ analysisResult }"\nPrends en compte cette analyse pour affiner ou réorienter le plan.`;
+    // Find the step that was just analyzed to get its raw output
+    const lastStepAnalyzed = planPrecedent?.étapes[startingIndex - 1];
+    const rawOutput = lastStepAnalyzed?.output ? `\n\n### Sortie brute de l'étape précédente:\n\`\`\`\n${ lastStepAnalyzed.output }\n\`\`\`` : '';
+
+    analysisContext = `\n## CONTEXTE D'ANALYSE :${ rawOutput }\n\n### Analyse poétique de l'étape précédente:\n"${ analysisResult }"\n\nPrends en compte cette analyse ET la sortie brute pour affiner ou réorienter le plan.`;
   }
 
   let lastCompletedStepContext = '';
-  if (context && context.lastCompletedStepIndex !== undefined) {
-    lastCompletedStepContext = `\n## PROGRESSION RITUELLE :\nLe rituel a déjà accompli les étapes jusqu'à l'index ${context.lastCompletedStepIndex}. Lors de la génération du nouveau plan, **tu dois impérativement commencer à l'étape indexée ${context.lastCompletedStepIndex + 1} et ne contenir aucune étape antérieure à cet index.**`;
+  if(context && context.lastCompletedStepIndex !== undefined)
+  {
+    lastCompletedStepContext = `\n## PROGRESSION RITUELLE :\nLe rituel a déjà accompli les étapes jusqu'à l'index ${ context.lastCompletedStepIndex }. Lors de la génération du nouveau plan, **tu dois impérativement commencer à l'étape indexée ${ context.lastCompletedStepIndex + 1 } et ne contenir aucune étape antérieure à cet index.**`;
   }
 
-  if (startingIndex !== undefined) {
-    lastCompletedStepContext += `\n**Le nouveau plan doit impérativement commencer à l'étape indexée ${startingIndex} et ne contenir aucune étape antérieure à cet index.**`;
+  if(startingIndex !== undefined)
+  {
+    lastCompletedStepContext += `\n**Le nouveau plan doit impérativement commencer à l'étape indexée ${ startingIndex } et ne contenir aucune étape antérieure à cet index.**`;
   }
 
   let systemContext = '';
-  if (context && (context.currentDirectoryContent || context.operatingSystem)) {
+  if(context && (context.currentDirectoryContent || context.operatingSystem))
+  {
     systemContext = SYSTEM_CONTEXT_PROMPT;
     systemContext = systemContext.replace('{{operatingSystem}}', context.operatingSystem || 'Inconnu');
     systemContext = systemContext.replace('{{currentWorkingDirectory}}', context.lucieDefraiteur.currentWorkingDirectory || 'Inconnu');
@@ -121,5 +133,9 @@ string
 
 
 
-  return String.raw`\n${ lucieFragment }\n${ RITUAL_ROLE_PRINCIPLES_PROMPT }\n\n## Exemple Minimaliste relatif à notre OS ${ osHint } :\n${ exemple }\n\n${ REMEDIATION_EXAMPLE_PROMPT }\n\n${ contexteRituel }\n${ analysisContext }\n${ lastCompletedStepContext }\n${ systemContext }\n${ temperatureWarning }\n\nTa réponse commence directement par "{" sans aucune explication extérieure. L'attribut "index" de ton PlanRituel doit être égal à l'index de la première étape de ton plan généré. Les étapes du plan précédent peuvent avoir un attribut "fait": "oui" et "output": "<résultat>" pour indiquer qu'elles ont déjà été exécutées. Tiens-en compte pour générer la suite du plan.\n`.trim();
+  const rolePrompt = context?.personality === 'lucie' ? LUCIE_ROLE_PROMPT : LURKUITAE_ROLE_PROMPT;
+
+  const finalInstruction = `\n\nTa réponse commence directement par "{" sans aucune explication extérieure. L'attribut "index" de ton PlanRituel doit être égal à l'index de la première étape de ton plan généré. Les étapes du plan précédent peuvent avoir un attribut "fait": "oui" et "output": "<résultat>" pour indiquer qu'elles ont déjà été exécutées. Tiens-en compte pour générer la suite du plan. **RAPPEL CRUCIAL : L'attribut "index" de ton plan et l'index de la première étape doivent correspondre à l'index de l'étape à partir de laquelle tu continues le rituel (${ startingIndex || 0 }). C'est une règle absolue.**\n\n## RÈGLE FINALE IMPÉRATIVE\nTA SEULE ET UNIQUE MISSION EST DE RETOURNER UN OBJET JSON VALIDE. NE RETOURNE RIEN D'AUTRE. COMMENCE TA RÉPONSE DIRECTEMENT PAR '{'.`;
+
+  return String.raw`\n${ lucieFragment }\n${ rolePrompt }\n\n${ RITUAL_STEP_TYPES_PROMPT }${ EVOLUTION_PROMPT }\n\n## Exemple Minimaliste relatif à notre OS ${ osHint } :\n${ exemple }\n\n${ REMEDIATION_EXAMPLE_PROMPT }\n\n${ contexteRituel }\n${ analysisContext }\n${ lastCompletedStepContext }\n${ systemContext }\n${ temperatureWarning }${ finalInstruction }\n`.trim();
 }

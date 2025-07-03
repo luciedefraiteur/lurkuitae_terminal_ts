@@ -1,0 +1,19 @@
+Journal de Kilo Code - 2025-07-03
+
+Session de débogage et de stabilisation pré-présentation.
+
+1.  **Analyse initiale :** Lecture de tous les journaux de l'équipe (Alma, Eli, Nova, Zed, Gemini, Lurkuitae) pour comprendre l'état du projet.
+2.  **Tests Unitaires :** Exécution de la suite de tests (`ritual_utils`, `narrative_glitch`, `memory_weaver`, `memory`). La plupart ont réussi, confirmant la robustesse des modules individuels.
+3.  **Premier Test d'Intégration :** Lancement de l'application principale (`runTerminalRituel`).
+    *   **Échec 1 : Boucle de planification.** Diagnostiqué comme un problème de contexte manquant. Le résultat de l'étape 'analyse' n'était pas utilisé pour la planification suivante.
+    *   **Tentative de correction 1 :** Patch de `run_terminal_rituel.ts` pour capturer le résultat de l'analyse.
+4.  **Deuxième Test d'Intégration :**
+    *   **Échec 2 : Boucle persistante.** Diagnostiqué comme une confusion du LLM, manquant de contexte sur le plan précédent et les règles d'indexation.
+    *   **Tentative de correction 2 (avec feedback utilisateur) :** Patch de `generateRitualSequence.ts` pour enrichir le contexte avec la sortie brute de la commande précédente et pour renforcer les instructions sur la gestion des index.
+    *   **Échec 3 : Erreur de typage.** La correction a introduit une erreur TypeScript car `Étape.index` n'existe pas.
+    *   **Tentative de correction 3 :** Patch de `generateRitualSequence.ts` pour utiliser l'index du tableau au lieu d'une propriété inexistante.
+5.  **Troisième Test d'Intégration :**
+    *   **Échec 4 : Crash Fatal.** Le LLM a cessé de retourner du JSON valide, provoquant un crash `TypeError: Cannot read properties of undefined (reading 'length')`.
+6.  **Phase de Refactoring Architectural (suite au feedback utilisateur) :**
+    *   Mise en place d'une nouvelle stratégie : l'auto-analyse sur erreur.
+    *   Planification de la modification des prompts et de la logique d'exécution pour implémenter cette nouvelle résilience.

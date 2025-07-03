@@ -5,7 +5,7 @@ import {generateErrorRemediationPrompt} from './prompts/generateErrorRemediation
 import {type RituelContext, type PlanRituel, CommandResult, Étape} from "./types.js";
 import path from 'path';
 import fs from 'fs';
-import { parse } from './permissive_parser/index.js';
+import {parse} from './permissive_parser/index.js';
 
 
 export async function handleChangerDossier(étape: Étape, context: RituelContext): Promise<any>
@@ -25,8 +25,17 @@ export async function handleChangerDossier(étape: Étape, context: RituelContex
 
 export async function handleCommande(étape: Étape, context: RituelContext, plan: PlanRituel, ask: (q: string) => Promise<string>): Promise<any>
 {
-  const result: any = {étape, index: -1}; // Index will be set by executeRituelPlan
-  const cmd = étape.contenu.startsWith('$') ? étape.contenu.slice(1) : étape.contenu;
+  const result: any = {étape, index: -1, success: false}; // Default to failure
+  const cmd = étape.contenu.trim();
+
+  // Permissive parser for special commands hallucinated as type: 'commande'
+  if(cmd.startsWith('changer_dossier'))
+  {
+    const newÉtape: Étape = {type: 'changer_dossier', contenu: cmd.replace('changer_dossier', '').trim()};
+    return handleChangerDossier(newÉtape, context);
+  }
+
+  // Default behavior: execute as a system command
   const commandResult: CommandResult = await handleSystemCommand(cmd, context.current_directory, context);
   context.command_input_history.push(cmd);
   context.command_output_history.push(commandResult.stdout);
@@ -35,67 +44,13 @@ export async function handleCommande(étape: Étape, context: RituelContext, pla
   result.exitCode = commandResult.exitCode;
   result.success = commandResult.success;
 
+  // The new architecture in ritual_utils.ts will handle the failure.
+  // This handler's only job is to execute and report.
   if(!commandResult.success)
   {
-    console.error(`[ERREUR COMMANDE] ${ cmd } a échoué avec le code ${ commandResult.exitCode }.`);
-    if(commandResult.stderr)
-    {
-      console.error(`Stderr: ${ commandResult.stderr }`);
-    }
-
-    const remediationPrompt = generateErrorRemediationPrompt({
-      command: cmd,
-      commandResult: commandResult,
-      contextHistory: context.historique,
-      originalInput: context.historique.at(-1)?.input || '',
-      currentPlan: plan
-    });
-
-    let remediationPlanResponse = await OllamaInterface.query(remediationPrompt);
-    let parsedRemediationPlan: PlanRituel | null = null;
-    const maxRetries = 3;
-    for(let i = 0; i < maxRetries; i++)
-    {
-      try
-      {
-        parsedRemediationPlan = parse(remediationPlanResponse.trim());
-        console.log("[INFO] Un plan de remédiation a été généré.");
-
-        // Demander la confirmation de l'utilisateur
-        const confirmationMessage = `Un plan de remédiation a été généré pour corriger l'erreur. Voulez-vous l'exécuter ?\nPlan : ${JSON.stringify(parsedRemediationPlan, null, 2)}`;
-        const userConfirmation = await handleConfirmationUtilisateur({ type: 'confirmation_utilisateur', contenu: confirmationMessage }, ask);
-
-        if (userConfirmation.confirmed) {
-          console.log("[INFO] Exécution du sous-rituel de remédiation...");
-          // const remediationResults = await executeRituelPlan(parsedRemediationPlan, context);
-          // result.remediationResults = remediationResults;
-          result.remediationResults = "Remediation plan confirmed and would be executed.";
-        } else {
-          console.log("[INFO] La remédiation a été annulée par l'utilisateur.");
-          result.remediationResults = "Remediation plan cancelled by user.";
-        }
-
-        break; // Exit loop if parsing is successful
-      } catch(e: unknown)
-      {
-        let errorMessage = "An unknown error occurred during remediation plan parsing.";
-        if(e instanceof Error)
-        {
-          errorMessage = e.message;
-        }
-        console.error(`[ERREUR] Échec du parsing du plan de remédiation (tentative ${ i + 1 }/${ maxRetries }) :`, errorMessage);
-        if(i < maxRetries - 1)
-        {
-          // Request AI to correct its JSON output
-          const correctionPrompt = `Le JSON que tu as généré est invalide. Erreur: ${ errorMessage }. Veuillez générer un JSON valide pour le plan de remédiation.`;
-          remediationPlanResponse = await OllamaInterface.query(correctionPrompt);
-        } else
-        {
-          result.remediationError = `Échec de la remédiation après ${ maxRetries } tentatives: ${ errorMessage }`;
-        }
-      }
-    }
+    console.error(`[ERREUR COMMANDE] '${ cmd }' a échoué avec le code ${ commandResult.exitCode }. Stderr: ${ commandResult.stderr }`);
   }
+
   return result;
 }
 
@@ -218,5 +173,14 @@ export async function handleInputUtilisateur(étape: Étape, ask: (q: string) =>
 ${ étape.contenu }`);
   const userInput = await ask('↳ Votre réponse : ');
   result.output = userInput;
+  return result;
+}
+
+export async function handleStepProposal(étape: Étape): Promise<any>
+{
+  const result: any = {étape, index: -1, success: true};
+  const message = `[PROPOSITION D'ÉVOLUTION] Lucie propose une nouvelle capacité : "${ étape.contenu }"`;
+  console.log(message);
+  result.output = message;
   return result;
 }

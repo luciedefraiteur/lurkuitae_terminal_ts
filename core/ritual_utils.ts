@@ -3,11 +3,11 @@ import {OllamaInterface, OllamaModel} from './ollama_interface.js';
 import {generateRitualSequencePrompt} from './prompts/generateRitualSequence.js';
 import {generateAnalysisPrompt} from './prompts/generateAnalysisPrompt.js';
 import {generateErrorRemediationPrompt} from './prompts/generateErrorRemediationPrompt.js';
-import {type RituelContext, type PlanRituel, CommandResult} from "./types.js"
+import {type RituelContext, type PlanRituel, CommandResult, type Étape} from "./types.js"
 import path from 'path';
 import fs from 'fs';
 import {parse} from './permissive_parser/index.js';
-import {handleChangerDossier, handleCommande, handleAnalyse, handleAttente, handleDialogue, handleQuestion, handleReponse, handleVerificationPreExecution, handleConfirmationUtilisateur, handleGenerationCode, handleInputUtilisateur} from './ritual_step_handlers.js';
+import {handleChangerDossier, handleCommande, handleAnalyse, handleAttente, handleDialogue, handleQuestion, handleReponse, handleVerificationPreExecution, handleConfirmationUtilisateur, handleGenerationCode, handleInputUtilisateur, handleStepProposal} from './ritual_step_handlers.js';
 import {Colors, colorize} from './utils/ui_utils.js';
 
 export function getContexteInitial(): RituelContext
@@ -58,7 +58,8 @@ Note: Pour la navigation dans les répertoires, utilise l'étape 'changer_dossie
       agapePhobos: 0,
       logosPathos: 0,
       harmoniaEris: 0,
-    }
+    },
+    personality: 'lurkuitae'
   };
 }
 
@@ -121,6 +122,7 @@ const defaultStepHandlers = {
   handleConfirmationUtilisateur,
   handleGenerationCode,
   handleInputUtilisateur,
+  handleStepProposal,
 };
 
 async function _executeSingleÉtape(
@@ -169,45 +171,13 @@ async function _executeSingleÉtape(
     case 'input_utilisateur':
       result = await handlers.handleInputUtilisateur(étape, ask);
       break;
+    case 'step_proposal':
+      result = await handlers.handleStepProposal(étape);
+      break;
   }
   return result;
 }
 
-async function _handleAnalysisAndReplan(
-  plan: PlanRituel,
-  context: RituelContext,
-  i: number,
-  result: any,
-  injectedGenerateRituel: typeof generateRituel,
-  model?: OllamaModel
-): Promise<void>
-{
-  console.log(colorize(`\n✨ Analyse terminée. Réévaluation du plan rituel basée sur l'analyse...`, Colors.FgMagenta));
-
-  const originalInputForThisPlan = context.historique.at(-1)?.input;
-  if(originalInputForThisPlan)
-  {
-    const newPlan = await injectedGenerateRituel(
-      originalInputForThisPlan,
-      context,
-      model,
-      result.analysis,
-      i + 1 // New plan should start after the analysis step
-    );
-
-    if(newPlan)
-    {
-      console.log(colorize(`\n✅ Nouveau plan rituel généré suite à l'analyse.`, Colors.FgGreen));
-      plan.étapes.splice(i + 1, plan.étapes.length - (i + 1), ...newPlan.étapes);
-    } else
-    {
-      console.error(colorize(`\n❌ Échec de la régénération du plan après analyse. Le plan actuel sera poursuivi.`, Colors.FgRed));
-    }
-  } else
-  {
-    console.warn(colorize(`\n⚠️ Impossible de récupérer l'input original pour la régénération du plan après analyse. Le plan actuel sera poursuivi.`, Colors.FgYellow));
-  }
-}
 
 export async function executeRituelPlan(
   plan: PlanRituel,
@@ -228,14 +198,33 @@ export async function executeRituelPlan(
 
     resultats.push(result);
     context.step_results_history.push(result);
-    // Mark the step as done and store its output
-    plan.étapes[i].fait = 'oui';
-    plan.étapes[i].output = result.output || result.analysis || result.text || result.waited || result.remediationResults; // Capture relevant output
-    context.lastCompletedStepIndex = i; // Update last completed step index
+    // Capture all possible outputs, including errors
+    plan.étapes[i].output = result.output || result.analysis || result.text || result.waited || result.remediationResults || result.stderr || result.error;
+    context.lastCompletedStepIndex = i;
 
-    if(étape.type === 'analyse' && result.analysis)
+    // Check for command failure
+    if(result.success === false)
     {
-      await _handleAnalysisAndReplan(plan, context, i, result, dependencies.generateRituel);
+      plan.étapes[i].fait = 'non'; // Mark as failed, not done
+
+      // Dynamically inject an analysis step to handle the error
+      const analysisStep: Étape = {
+        type: 'analyse',
+        contenu: `L'étape précédente (index ${ i }: '${ étape.contenu }') a échoué. Analyse la sortie (qui contient l'erreur) et propose un plan de remédiation.`,
+      };
+      plan.étapes.splice(i + 1, 0, analysisStep);
+      // The loop will naturally execute this new analysis step next.
+    } else
+    {
+      plan.étapes[i].fait = 'oui'; // Mark as successful
+      // If the successful step was an analysis, trigger re-planning
+      // If the successful step was an analysis, stop execution here.
+      // The main loop in runTerminalRituel will handle the re-planning.
+      if(étape.type === 'analyse' && result.analysis)
+      {
+        console.log(colorize(`\n✨ Analyse terminée. Retour à la boucle principale pour la replanification...`, Colors.FgMagenta));
+        return resultats;
+      }
     }
   }
 

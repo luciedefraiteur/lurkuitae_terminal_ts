@@ -15,14 +15,26 @@ const ask = (q: string) => new Promise<string>((res) => rl.question(q, res));
 const args = process.argv.slice(2);
 let model: OllamaModel = OllamaModel.Mistral; // Default model
 let chantModeEnabled: boolean = false;
+let personality: 'lurkuitae' | 'lucie' = 'lurkuitae'; // Default personality
 
 const modelArgIndex = args.indexOf('--model');
 const chantModeArgIndex = args.indexOf('--chant-mode');
+const modeArgIndex = args.indexOf('--mode');
 
 if(chantModeArgIndex > -1)
 {
   chantModeEnabled = true;
 }
+
+if(modeArgIndex > -1 && args[modeArgIndex + 1])
+{
+  const requestedMode = args[modeArgIndex + 1];
+  if(requestedMode === 'lucie')
+  {
+    personality = 'lucie';
+  }
+}
+
 if(modelArgIndex > -1 && args[modelArgIndex + 1])
 {
   const requestedModel = args[modelArgIndex + 1];
@@ -40,6 +52,7 @@ try
 {
   const context = getContexteInitial();
   context.chantModeEnabled = chantModeEnabled;
+  context.personality = personality;
   //demonstrateCursorControl(); // Call the demonstration function
   // Give some time to see the demonstration before the ritual starts
   //await new Promise(resolve => setTimeout(resolve, 5000));

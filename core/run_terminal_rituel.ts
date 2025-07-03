@@ -50,10 +50,12 @@ export async function runTerminalRituel(context: RituelContext, rl: readline.Int
   let initialInputReceived = false;
   let lastAnalysisResult: string | undefined = undefined;
 
-  while (true) {
+  while(true)
+  {
     let inputForPlanGeneration: string | undefined;
 
-    if (!initialInputReceived) {
+    if(!initialInputReceived)
+    {
       let initialUserInput: string | undefined;
       if(testInputs && testInputs.length > 0)
       {
@@ -69,7 +71,7 @@ Offre ton souffle (ou tape 'exit') : ${ initialUserInput }`, Colors.FgCyan)); //
         stopCursorAnimation(); // Ensure cursor is stopped before asking for input
         const emotionalInterpretation = await interpretEmotion(context.emotionalState);
         console.log(colorize(`
-${emotionalInterpretation}`, Colors.FgMagenta));
+${ emotionalInterpretation }`, Colors.FgMagenta));
 
         const welcomeMessage = generateWelcomeMessagePrompt(context);
         initialUserInput = await ask(colorize(welcomeMessage, Colors.FgCyan));
@@ -77,10 +79,12 @@ ${emotionalInterpretation}`, Colors.FgMagenta));
       initialInputReceived = true;
       lastAnalysisResult = initialUserInput; // First input is the initial analysis result
       inputForPlanGeneration = "Analyse de l'intention initiale de l'utilisateur";
-    } else if (lastAnalysisResult !== undefined) {
+    } else if(lastAnalysisResult !== undefined)
+    {
       // If there's a pending analysis result from a previous input_utilisateur step
       inputForPlanGeneration = "Analyse de la réponse utilisateur"; // Generic input for plan generation
-    } else {
+    } else
+    {
       // This branch should ideally not be reached if logic is correct
       console.error("Erreur: Aucune entrée utilisateur ou résultat d'analyse disponible.");
       return false;
@@ -123,11 +127,13 @@ ${ chantContent }
     }
 
     // Collect current directory content
-    try {
-      const files = await fsPromises.readdir(context.current_directory, { withFileTypes: true });
+    try
+    {
+      const files = await fsPromises.readdir(context.current_directory, {withFileTypes: true});
       context.currentDirectoryContent = files.map(file => file.name + (file.isDirectory() ? '/' : '')).join('\n');
-    } catch (error) {
-      context.currentDirectoryContent = `[ERREUR] Impossible de lire le répertoire: ${(error as Error).message}`;
+    } catch(error)
+    {
+      context.currentDirectoryContent = `[ERREUR] Impossible de lire le répertoire: ${ (error as Error).message }`;
     }
 
     // Collect operating system information
@@ -141,7 +147,7 @@ ${ chantContent }
     const dream = await enterReverie();
     context.narrativeState.currentDream = dream;
     console.log(colorize(`
-${dream}`, Colors.FgBlue));
+${ dream }`, Colors.FgBlue));
 
 
     let plan: PlanRituel | null = null;
@@ -156,7 +162,9 @@ ${dream}`, Colors.FgBlue));
 ⚠️ Tentative de régénération du plan (${ currentRetry }/${ maxPlanGenerationRetries }). L'IA a précédemment généré un JSON invalide.`, Colors.FgYellow));
       }
 
+      console.log(colorize(`[DEBUG] Appel de generateRituel avec le contexte d'analyse...`, Colors.FgYellow));
       plan = await generateRituel(inputForPlanGeneration, context, model, lastAnalysisResult, context.lastCompletedStepIndex !== undefined ? context.lastCompletedStepIndex + 1 : undefined);
+      console.log(colorize(`[DEBUG] generateRituel a retourné un plan.`, Colors.FgGreen));
 
       if(plan === null)
       {
@@ -182,20 +190,26 @@ ${dream}`, Colors.FgBlue));
     const resultats = await executeRituelPlan(plan, context, ask);
     stopCursorAnimation(); // Stop cursor animation after ritual execution
 
-    lastAnalysisResult = undefined; // Reset for next iteration
-
+    let newAnalysisResult: string | undefined;
     for(const res of resultats)
     {
       displayRitualStepResult(res);
 
       if(res.étape.type === 'input_utilisateur')
       {
-        lastAnalysisResult = res.output; // Capture user input for next analysis
+        newAnalysisResult = res.output; // Capture user input for next analysis
         break; // Exit loop to generate new plan based on user input
       }
+      if(res.étape.type === 'analyse')
+      {
+        newAnalysisResult = res.analysis; // Capture analysis result for next plan
+        break; // Exit loop to generate new plan based on analysis
+      }
     }
+    lastAnalysisResult = newAnalysisResult; // Set the result for the next iteration
 
-    if (lastAnalysisResult === undefined) {
+    if(lastAnalysisResult === undefined)
+    {
       // If no input_utilisateur step was encountered, continue with the next plan generation
       // based on the previous context or a new initial input if needed.
       // For now, we'll just loop back.
