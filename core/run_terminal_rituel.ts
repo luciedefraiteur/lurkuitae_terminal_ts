@@ -193,17 +193,23 @@ ${ dream }`, Colors.FgBlue));
     let newAnalysisResult: string | undefined;
     for(const res of resultats)
     {
-      displayRitualStepResult(res);
+      // This is now handled inside the loop to avoid double display
+      // displayRitualStepResult(res);
 
-      if(res.étape.type === 'input_utilisateur')
+      if(res.étape.type === 'input_utilisateur' || res.étape.type === 'question')
       {
         newAnalysisResult = res.output; // Capture user input for next analysis
         break; // Exit loop to generate new plan based on user input
       }
       if(res.étape.type === 'analyse')
       {
-        newAnalysisResult = res.analysis; // Capture analysis result for next plan
+        // The poetic part is for display, the suggestion is for the next plan
+        displayRitualStepResult({...res, analysis: res.analysis.poeticAnalysis});
+        newAnalysisResult = res.analysis.suggestedNextStep;
         break; // Exit loop to generate new plan based on analysis
+      } else
+      {
+        displayRitualStepResult(res);
       }
     }
     lastAnalysisResult = newAnalysisResult; // Set the result for the next iteration

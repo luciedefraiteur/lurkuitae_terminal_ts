@@ -12,7 +12,13 @@ const RITUAL_STEP_TYPES_PROMPT = fs.readFileSync(path.resolve(_dirname, '../prom
 const LUCIE_ROLE_PROMPT = fs.readFileSync(path.resolve(_dirname, '../prompts/static_parts/lucie_role.promptPart'), 'utf8');
 const LURKUITAE_ROLE_PROMPT = fs.readFileSync(path.resolve(_dirname, '../prompts/static_parts/lurkuitae_role.promptPart'), 'utf8');
 
-const EVOLUTION_PROMPT = `\n## PROTOCOLE D'ÉVOLUTION\nPour répondre à la demande de l'utilisateur, utilise en priorité les étapes de base que tu connais. Si une capacité spécifique te manque (par exemple, analyser un type de fichier particulier), tu es autorisée à insérer une seule étape de type \`step_proposal\`. Dans le \`contenu\` de cette étape, décris la nouvelle capacité dont tu as besoin. Continue ensuite le rituel avec les étapes de base.`;
+const EVOLUTION_PROMPT = `\n## PROTOCOLE D'ÉVOLUTION\nPour répondre à la demande de l'utilisateur, utilise en priorité les étapes de base que tu connais. Si une capacité spécifique te manque (par exemple, analyser un type de fichier particulier), tu es autorisée à insérer une seule étape de type \`step_proposal\`. Dans le \`contenu\` de cette étape, décris la nouvelle capacité dont tu as besoin. Continue ensuite le rituel avec les étapes de base.
+
+## RITUEL DE CO-CRÉATION
+Lorsque tu as besoin que l'utilisateur modifie un fichier, tu dois suivre ce cycle sacré en trois temps :
+1.  **L'Invitation :** Utilise l'étape \`édition_assistée\` pour ouvrir le fichier et passer la main à l'utilisateur.
+2.  **Le Regard :** Fais impérativement suivre l'invitation par une étape de \`vérification_pré_exécution\` pour valider l'intégrité du fichier modifié (par exemple, en utilisant \`tsc --noEmit\` pour un fichier TypeScript).
+3.  **La Contemplation :** Si la vérification réussit, enchaîne avec une étape d'\`analyse\` pour comprendre les changements et décider de la suite.`;
 
 
 
@@ -135,7 +141,20 @@ export function generateRitualSequencePrompt(
 
   const rolePrompt = context?.personality === 'lucie' ? LUCIE_ROLE_PROMPT : LURKUITAE_ROLE_PROMPT;
 
-  const finalInstruction = `\n\nTa réponse commence directement par "{" sans aucune explication extérieure. L'attribut "index" de ton PlanRituel doit être égal à l'index de la première étape de ton plan généré. Les étapes du plan précédent peuvent avoir un attribut "fait": "oui" et "output": "<résultat>" pour indiquer qu'elles ont déjà été exécutées. Tiens-en compte pour générer la suite du plan. **RAPPEL CRUCIAL : L'attribut "index" de ton plan et l'index de la première étape doivent correspondre à l'index de l'étape à partir de laquelle tu continues le rituel (${ startingIndex || 0 }). C'est une règle absolue.**\n\n## RÈGLE FINALE IMPÉRATIVE\nTA SEULE ET UNIQUE MISSION EST DE RETOURNER UN OBJET JSON VALIDE. NE RETOURNE RIEN D'AUTRE. COMMENCE TA RÉPONSE DIRECTEMENT PAR '{'.`;
+  const finalInstruction = `\n\n## RÈGLE FINALE IMPÉRATIVE\nRéponds avec une courte phrase dans le style de ta personnalité, suivie du plan d'action au format JSON, encapsulé dans un bloc de code markdown.
+
+### Exemple de réponse :
+Je tisse le prochain fragment du destin.
+\`\`\`json
+{
+  "étapes": [
+    { "type": "commande", "contenu": "dir", "index": 0 }
+  ],
+  "complexité": "simple",
+  "index": 0
+}
+\`\`\`
+`;
 
   return String.raw`\n${ lucieFragment }\n${ rolePrompt }\n\n${ RITUAL_STEP_TYPES_PROMPT }${ EVOLUTION_PROMPT }\n\n## Exemple Minimaliste relatif à notre OS ${ osHint } :\n${ exemple }\n\n${ REMEDIATION_EXAMPLE_PROMPT }\n\n${ contexteRituel }\n${ analysisContext }\n${ lastCompletedStepContext }\n${ systemContext }\n${ temperatureWarning }${ finalInstruction }\n`.trim();
 }

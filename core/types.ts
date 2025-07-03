@@ -1,10 +1,11 @@
 export interface Étape
 {
-  type: 'commande' | 'analyse' | 'attente' | 'dialogue' | 'question' | 'réponse' | 'changer_dossier' | 'vérification_pré_exécution' | 'confirmation_utilisateur' | 'génération_code' | 'input_utilisateur' | 'step_proposal';
+  type: 'commande' | 'analyse' | 'attente' | 'dialogue' | 'question' | 'réponse' | 'changer_dossier' | 'vérification_pré_exécution' | 'confirmation_utilisateur' | 'génération_code' | 'input_utilisateur' | 'step_proposal' | 'édition_assistée';
   contenu: string;
   durée_estimée?: string;
   fait?: 'oui' | 'non';
   output?: any;
+  analysis?: {poeticAnalysis: string, suggestedNextStep: string};
 }
 
 export interface PlanRituel

@@ -39,7 +39,7 @@ function adaptToPlanRituel(data: any): PlanRituel | null
       if(!item || typeof item !== 'object') return null;
 
       // Attempt to map the hallucinated keys to our canonical keys.
-      const type = item.type || item.step;
+      const type = item.type || item.step || item.action;
       const contenu = item.contenu || item.command || item.description;
 
       if(!type || !contenu) return null;
@@ -58,6 +58,20 @@ function adaptToPlanRituel(data: any): PlanRituel | null
         index: (potentialArray[0] && potentialArray[0].index) || 0, // Try to get index from first step, or default to 0
       };
     }
+  }
+
+  // Case 3: It's a single step object, not wrapped in a plan.
+  if(data.hasOwnProperty('type') && data.hasOwnProperty('contenu'))
+  {
+    const etape: Étape = {
+      type: data.type,
+      contenu: data.contenu,
+    };
+    return {
+      étapes: [etape],
+      complexité: data.complexité || 'simple',
+      index: data.index || 0,
+    };
   }
 
   return null; // If it's an unknown object format

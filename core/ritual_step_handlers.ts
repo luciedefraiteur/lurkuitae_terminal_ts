@@ -64,9 +64,18 @@ export async function handleAnalyse(étape: Étape, context: RituelContext, inde
     index: index,
     plan,
     original_input: context.historique.at(-1)?.input || '',
+    context: context,
   });
-  const analysis = await OllamaInterface.query(prompt);
-  result.analysis = analysis;
+  const rawAnalysis = await OllamaInterface.query(prompt);
+
+  const suggestionMatch = rawAnalysis.match(/ACTION SUGGÉRÉE\s*:\s*(.*)/);
+  const suggestedNextStep = suggestionMatch ? suggestionMatch[1].trim() : "Continuer.";
+
+  result.analysis = {
+    poeticAnalysis: rawAnalysis,
+    suggestedNextStep: suggestedNextStep
+  };
+
   return result;
 }
 
@@ -95,12 +104,9 @@ export async function handleDialogue(étape: Étape): Promise<any>
 export async function handleQuestion(étape: Étape, context: RituelContext, ask: (q: string) => Promise<string>): Promise<any>
 {
   const result: any = {étape, index: -1}; // Index will be set by executeRituelPlan
-  result.text = étape.contenu;
   console.log(`❓ ${ étape.contenu }`);
   const userInput = await ask('↳ Réponse : ');
-  // This part needs to be handled by runTerminalRituel or a higher level function
-  // as it involves generating a new ritual plan.
-  result.userInput = userInput;
+  result.output = userInput;
   return result;
 }
 
@@ -163,6 +169,36 @@ export async function handleGenerationCode(étape: Étape): Promise<any>
   const result: any = {étape, index: -1}; // Index will be set by executeRituelPlan
   console.log(`[INFO] Intention de génération de code : ${ étape.contenu }`);
   result.output = `[INFO] Demande de génération de code enregistrée : ${ étape.contenu }`;
+  return result;
+}
+
+export async function handleEditionAssistee(étape: Étape, context: RituelContext, ask: (q: string) => Promise<string>): Promise<any>
+{
+  const result: any = {étape, index: -1, success: true};
+  const filePath = path.resolve(context.current_directory, étape.contenu);
+
+  if(!fs.existsSync(filePath))
+  {
+    result.success = false;
+    result.output = `[ERREUR] Fichier non trouvé pour l'édition : ${ filePath }`;
+    console.error(result.output);
+    return result;
+  }
+
+  const openCommand = process.platform === 'win32' ? 'start' : 'open';
+
+  try
+  {
+    await handleSystemCommand(`${ openCommand } ${ filePath }`, context.current_directory, context);
+    console.log(`\nJ'ai ouvert le fichier ${ étape.contenu } pour vous.`);
+    result.output = await ask("Appuyez sur Entrée lorsque vous avez terminé vos modifications...");
+  } catch(error)
+  {
+    result.success = false;
+    result.output = `[ERREUR] Impossible d'ouvrir le fichier : ${ error }`;
+    console.error(result.output);
+  }
+
   return result;
 }
 

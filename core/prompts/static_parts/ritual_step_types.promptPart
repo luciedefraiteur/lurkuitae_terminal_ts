@@ -9,3 +9,4 @@
 - **vérification_pré_exécution** : vérifier une condition (ex: existence de fichier, disponibilité de commande) avant une action critique. Contenu: "fichier_existe [chemin]" ou "commande_disponible [nom_commande]".
 - **confirmation_utilisateur** : demander une confirmation explicite à l'utilisateur pour des actions à fort impact. Contenu: "[Question de confirmation]".
 - **génération_code** : intention de générer ou modifier du code/configuration. Contenu: "[Description de la génération]".
+- **édition_assistée**: Ouvre un fichier dans l'éditeur de l'utilisateur et attend qu'il ait fini. `contenu`: "[chemin/vers/le/fichier]".

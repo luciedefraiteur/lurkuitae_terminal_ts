@@ -7,8 +7,9 @@ import {type RituelContext, type PlanRituel, CommandResult, type Étape} from ".
 import path from 'path';
 import fs from 'fs';
 import {parse} from './permissive_parser/index.js';
-import {handleChangerDossier, handleCommande, handleAnalyse, handleAttente, handleDialogue, handleQuestion, handleReponse, handleVerificationPreExecution, handleConfirmationUtilisateur, handleGenerationCode, handleInputUtilisateur, handleStepProposal} from './ritual_step_handlers.js';
+import {handleChangerDossier, handleCommande, handleAnalyse, handleAttente, handleDialogue, handleQuestion, handleReponse, handleVerificationPreExecution, handleConfirmationUtilisateur, handleGenerationCode, handleInputUtilisateur, handleStepProposal, handleEditionAssistee} from './ritual_step_handlers.js';
 import {Colors, colorize} from './utils/ui_utils.js';
+import {generateRemediationPrompt} from './prompts/generateRemediationPlan.js';
 
 export function getContexteInitial(): RituelContext
 {
@@ -92,20 +93,22 @@ export async function generateRituel(input: string, context: RituelContext, mode
   const prompt = generateRitualSequencePrompt(input, planPrecedent, indexPrecedent, context, analysisResult, startingIndex);
   const response = await safeQuery(prompt, 'planification', model);
 
-  let responseToParse = response.trim();
+  const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
 
-  // Heuristic: If it looks like a partial object (contains a colon but doesn't start with {), try wrapping it.
-  if(!responseToParse.startsWith('{') && responseToParse.includes(':'))
+  if(!jsonMatch || !jsonMatch[1])
   {
-    responseToParse = `{${ responseToParse }}`;
+    console.error(`[ERREUR PARSING RITUEL] Aucun bloc de code JSON trouvé dans la réponse de l'IA. Réponse brute: "${ response }"`);
+    return null;
   }
+
+  const jsonString = jsonMatch[1].trim();
 
   try
   {
-    return parse(responseToParse);
+    return parse(jsonString);
   } catch(e: any)
   { // Catch the error to log it
-    console.error(`[ERREUR PARSING RITUEL] Échec de l'analyse du plan rituel: ${ e.message || e }. Input: "${ response.trim() }"`);
+    console.error(`[ERREUR PARSING RITUEL] Échec de l'analyse du plan rituel: ${ e.message || e }. Input: "${ jsonString }"`);
     return null;
   }
 }
@@ -123,6 +126,7 @@ const defaultStepHandlers = {
   handleGenerationCode,
   handleInputUtilisateur,
   handleStepProposal,
+  handleEditionAssistee,
 };
 
 async function _executeSingleÉtape(
@@ -174,6 +178,9 @@ async function _executeSingleÉtape(
     case 'step_proposal':
       result = await handlers.handleStepProposal(étape);
       break;
+    case 'édition_assistée':
+      result = await handlers.handleEditionAssistee(étape, context, ask);
+      break;
   }
   return result;
 }
@@ -206,14 +213,35 @@ export async function executeRituelPlan(
     if(result.success === false)
     {
       plan.étapes[i].fait = 'non'; // Mark as failed, not done
+      console.log(colorize(`\n🔥 Échec de l'étape. Invocation du rituel de remédiation...`, Colors.FgRed));
 
-      // Dynamically inject an analysis step to handle the error
-      const analysisStep: Étape = {
-        type: 'analyse',
-        contenu: `L'étape précédente (index ${ i }: '${ étape.contenu }') a échoué. Analyse la sortie (qui contient l'erreur) et propose un plan de remédiation.`,
-      };
-      plan.étapes.splice(i + 1, 0, analysisStep);
-      // The loop will naturally execute this new analysis step next.
+      const remediationPrompt = generateRemediationPrompt(étape, result.output || result.stderr, context);
+      const remediationPlanJson = await safeQuery(remediationPrompt, 'remediation_plan', undefined);
+
+      try
+      {
+        const remediationSteps = JSON.parse(remediationPlanJson) as Étape[];
+        if(Array.isArray(remediationSteps))
+        {
+          console.log(colorize(`\n✨ Plan de remédiation reçu. Exécution...`, Colors.FgMagenta));
+          const remediationPlan: PlanRituel = {
+            étapes: remediationSteps,
+            complexité: 'simple',
+            index: 0
+          };
+          // Execute the remediation plan. This is a recursive call, but on a separate, smaller plan.
+          await executeRituelPlan(remediationPlan, context, ask);
+
+          // After remediation, we can decide whether to retry the failed step or stop.
+          // For now, we'll just log it and continue, effectively skipping the failed step.
+          console.log(colorize(`\n✅ Rituel de remédiation terminé.`, Colors.FgGreen));
+
+        }
+      } catch(e)
+      {
+        console.error(colorize(`\n❌ Échec de l'analyse du plan de remédiation. Erreur: ${ e }`, Colors.FgRed));
+      }
+
     } else
     {
       plan.étapes[i].fait = 'oui'; // Mark as successful
