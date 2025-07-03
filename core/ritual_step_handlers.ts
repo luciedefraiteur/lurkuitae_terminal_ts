@@ -23,7 +23,7 @@ export async function handleChangerDossier(étape: Étape, context: RituelContex
   return result;
 }
 
-export async function handleCommande(étape: Étape, context: RituelContext, plan: PlanRituel): Promise<any>
+export async function handleCommande(étape: Étape, context: RituelContext, plan: PlanRituel, ask: (q: string) => Promise<string>): Promise<any>
 {
   const result: any = {étape, index: -1}; // Index will be set by executeRituelPlan
   const cmd = étape.contenu.startsWith('$') ? étape.contenu.slice(1) : étape.contenu;
@@ -59,12 +59,22 @@ export async function handleCommande(étape: Étape, context: RituelContext, pla
       try
       {
         parsedRemediationPlan = parse(remediationPlanResponse.trim());
-        console.log("[INFO] Exécution du sous-rituel de remédiation...");
-        // Assuming executeRituelPlan is available here or passed as argument
-        // For now, we'll just log that it would be executed.
-        // const remediationResults = await executeRituelPlan(parsedRemediationPlan, context);
-        // result.remediationResults = remediationResults;
-        result.remediationResults = "Remediation plan generated and would be executed.";
+        console.log("[INFO] Un plan de remédiation a été généré.");
+
+        // Demander la confirmation de l'utilisateur
+        const confirmationMessage = `Un plan de remédiation a été généré pour corriger l'erreur. Voulez-vous l'exécuter ?\nPlan : ${JSON.stringify(parsedRemediationPlan, null, 2)}`;
+        const userConfirmation = await handleConfirmationUtilisateur({ type: 'confirmation_utilisateur', contenu: confirmationMessage }, ask);
+
+        if (userConfirmation.confirmed) {
+          console.log("[INFO] Exécution du sous-rituel de remédiation...");
+          // const remediationResults = await executeRituelPlan(parsedRemediationPlan, context);
+          // result.remediationResults = remediationResults;
+          result.remediationResults = "Remediation plan confirmed and would be executed.";
+        } else {
+          console.log("[INFO] La remédiation a été annulée par l'utilisateur.");
+          result.remediationResults = "Remediation plan cancelled by user.";
+        }
+
         break; // Exit loop if parsing is successful
       } catch(e: unknown)
       {
@@ -105,12 +115,18 @@ export async function handleAnalyse(étape: Étape, context: RituelContext, inde
   return result;
 }
 
-export async function handleAttente(étape: Étape): Promise<any>
+export async function handleAttente(étape: Étape, context: RituelContext): Promise<any>
 {
   const result: any = {étape, index: -1}; // Index will be set by executeRituelPlan
   const ms = parseInt(étape.durée_estimée || '2000');
+
+  // Générer et afficher le message d'attente
+  const waitMessage = await OllamaInterface.generateWaitMessage(context);
+  console.log(waitMessage); // Afficher le message à l'utilisateur
+
   await new Promise(resolve => setTimeout(resolve, ms));
   result.waited = ms;
+  result.waitMessage = waitMessage; // Sauvegarder le message pour l'historique
   return result;
 }
 
@@ -192,5 +208,15 @@ export async function handleGenerationCode(étape: Étape): Promise<any>
   const result: any = {étape, index: -1}; // Index will be set by executeRituelPlan
   console.log(`[INFO] Intention de génération de code : ${ étape.contenu }`);
   result.output = `[INFO] Demande de génération de code enregistrée : ${ étape.contenu }`;
+  return result;
+}
+
+export async function handleInputUtilisateur(étape: Étape, ask: (q: string) => Promise<string>): Promise<any>
+{
+  const result: any = {étape, index: -1}; // Index will be set by executeRituelPlan
+  console.log(`
+${ étape.contenu }`);
+  const userInput = await ask('↳ Votre réponse : ');
+  result.output = userInput;
   return result;
 }

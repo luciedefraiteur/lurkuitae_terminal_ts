@@ -1,0 +1,36 @@
+--- Début du log Gemini - jeudi 3 juillet 2025 ---
+
+**Session de test et d'amélioration du système de mémoire**
+
+1.  **Analyse initiale et planification :**
+    *   Consultation de l'historique Git pour identifier les nouvelles fonctionnalités.
+    *   Identification des fichiers liés à la mémoire (`memory.ts`, `memory_weaver.ts`, `memory_weaver.test.ts`).
+    *   Planification de l'ajout de tests pour `memory.ts` et l'extension des tests pour `memory_weaver.ts`.
+
+2.  **Développement et débogage des tests `memory.ts` :**
+    *   Création du fichier `core/memory.test.ts` avec des tests unitaires de base.
+    *   Exécution des tests et identification d'une erreur de logique dans `Memory.append` (taille du log).
+    *   Correction de `core/memory.ts` (`this.memoryLog.length > 10` changé en `>= 10`).
+    *   Vérification du succès des tests de `memory.ts`.
+
+3.  **Développement et débogage des tests `memory_weaver.ts` :**
+    *   Ajout de nouveaux tests pour `generateAndSaveMemoryFragment`, `appendToVector`, `enterReverie`, et `updateConstellationMap` à `core/memory_weaver.test.ts`.
+    *   Tentative d'utilisation de `jest.mock` (non compatible avec l'environnement actuel).
+    *   Refactorisation de `memory_weaver.test.ts` pour utiliser un mock manuel de `OllamaInterface.query`.
+    *   Identification et correction d'erreurs d'exportation dans `core/memory_weaver.ts` (fonctions `generateAndSaveMemoryFragment`, `appendToVector`, `enterReverie`, `updateConstellationMap` non exportées).
+        *   Plusieurs tentatives infructueuses avec `replace` dues à la sensibilité aux caractères invisibles.
+        *   Solution : Lecture complète du fichier, modification en mémoire pour ajouter `export`, puis réécriture complète du fichier.
+    *   Identification et correction d'une erreur TypeScript dans `updateConstellationMap` (`Property 'type' does not exist`). Ajustement de l'accès à la propriété `type` via `PlanRituel.étapes`.
+    *   Refactorisation de la structure de test dans `memory_weaver.test.ts` pour utiliser `globalSetup` et `globalTeardown` afin d'améliorer l'isolation et le nettoyage des tests.
+    *   Correction d'une erreur de typage (`implicitly has type 'any[]'`) pour le tableau `tests`.
+    *   Vérification du succès de tous les tests de `memory_weaver.ts`.
+
+4.  **Gestion des logs et du dépôt Git :**
+    *   Confirmation que les logs internes du projet (`vector_of_intent.log`) utilisent `fs.appendFile`.
+    *   Préparation et exécution du commit des modifications.
+        *   Plusieurs tentatives infructueuses de commit en ligne de commande en raison de problèmes de guillemets et de syntaxe shell.
+        *   Solution : Écriture du message de commit dans un fichier temporaire (`commit_message.txt`) et utilisation de `git commit -F`.
+    *   Push des modifications vers le dépôt distant.
+    *   Création de ce fichier `gemini.log` pour consigner mes actions.
+
+--- Fin du log Gemini ---

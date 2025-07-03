@@ -63,6 +63,8 @@ async function runOllamaAutoCorrectionTests(testName: string, initialModel: Olla
       eliInfluence: 0.5,
     },
     chantModeEnabled: false,
+    narrativeState: { currentArc: '', keyMotifs: [], characterStates: {} },
+    emotionalState: { agapePhobos: 0, logosPathos: 0, harmoniaEris: 0 },
   };
 
   const plan: PlanRituel = {
@@ -91,7 +93,7 @@ async function runOllamaAutoCorrectionTests(testName: string, initialModel: Olla
   const result = await handleCommande({
     type: 'commande',
     contenu: 'test_command'
-  }, context, plan);
+  }, context, plan, async (q: string) => "yes");
 
   assert(result.remediationResults !== undefined, `${ testName }: Remediation results should be present`);
   assert(result.remediationError === undefined, `${ testName }: No remediation error after correction`);
@@ -130,6 +132,8 @@ async function runChangerDossierTest() {
       eliInfluence: 0.5,
     },
     chantModeEnabled: false,
+    narrativeState: { currentArc: '', keyMotifs: [], characterStates: {} },
+    emotionalState: { agapePhobos: 0, logosPathos: 0, harmoniaEris: 0 },
   };
 
   const etape: Étape = {
