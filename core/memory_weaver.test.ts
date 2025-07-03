@@ -36,9 +36,14 @@ async function runTest(name: string, testFn: () => Promise<void>)
     {
         await testFn();
         console.log(`[PASS] ${ name }`);
-    } catch(error)
+    } catch(error: any)
     {
-        console.error(`[FAIL] ${ name }`, error);
+        console.error(`[FAIL] ${ name }`);
+        console.error(`  Dissonance: ${error.message}`);
+        if (error.actual !== undefined && error.expected !== undefined) {
+            console.error(`  Attendu: ${error.expected}, Reçu: ${error.actual}`);
+        }
+        console.error(`  Trace: ${error.stack}`);
     }
 }
 
