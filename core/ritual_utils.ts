@@ -84,11 +84,11 @@ export async function safeQuery(prompt: string, label: string, model?: OllamaMod
   return response;
 }
 
-export async function generateRituel(input: string, context: RituelContext, model?: OllamaModel, analysisResult?: string): Promise<PlanRituel | null>
+export async function generateRituel(input: string, context: RituelContext, model?: OllamaModel, analysisResult?: string, startingIndex?: number): Promise<PlanRituel | null>
 {
   const planPrecedent = context.historique.at(-1)?.plan;
   const indexPrecedent = planPrecedent?.index ?? undefined;
-  const prompt = generateRitualSequencePrompt(input, planPrecedent, indexPrecedent, context);
+  const prompt = generateRitualSequencePrompt(input, planPrecedent, indexPrecedent, context, analysisResult, startingIndex);
   const response = await safeQuery(prompt, 'planification', model);
 
   let responseToParse = response.trim();
@@ -145,7 +145,7 @@ async function _executeSingleÉtape(
       result = await handlers.handleAnalyse(étape, context, i, plan);
       break;
     case 'attente':
-      result = await handlers.handleAttente(étape);
+      result = await handlers.handleAttente(étape, context);
       break;
     case 'dialogue':
       result = await handlers.handleDialogue(étape);
@@ -187,7 +187,8 @@ async function _handleAnalysisAndReplan(
       originalInputForThisPlan,
       context,
       model,
-      result.analysis
+      result.analysis,
+      i + 1 // New plan should start after the analysis step
     );
 
     if(newPlan)
@@ -223,6 +224,10 @@ export async function executeRituelPlan(
 
     resultats.push(result);
     context.step_results_history.push(result);
+    // Mark the step as done and store its output
+    plan.étapes[i].fait = 'oui';
+    plan.étapes[i].output = result.output || result.analysis || result.text || result.waited || result.remediationResults; // Capture relevant output
+    context.lastCompletedStepIndex = i; // Update last completed step index
 
     if(étape.type === 'analyse' && result.analysis)
     {

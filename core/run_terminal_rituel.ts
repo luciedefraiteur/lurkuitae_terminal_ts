@@ -133,7 +133,7 @@ ${dream}`, Colors.FgBlue));
 ⚠️ Tentative de régénération du plan (${ currentRetry }/${ maxPlanGenerationRetries }). L'IA a précédemment généré un JSON invalide.`, Colors.FgYellow));
     }
 
-    plan = await generateRituel(input, context, model);
+    plan = await generateRituel(input, context, model, undefined, context.lastCompletedStepIndex !== undefined ? context.lastCompletedStepIndex + 1 : undefined);
 
     if(plan === null)
     {

@@ -20,7 +20,8 @@ export function generateRitualSequencePrompt(
   planPrecedent?: PlanRituel,
   indexCourant?: number,
   context?: RituelContext,
-  analysisResult?: string
+  analysisResult?: string,
+  startingIndex?: number
 ): string
 {
   let exemple;
@@ -28,9 +29,9 @@ export function generateRitualSequencePrompt(
   {
     exemple = `{
   "étapes": [
-    { "type": "commande", "contenu": "Get-ChildItem" },
-    { "type": "analyse", "contenu": "Identifier le fichier main.ts" },
-    { "type": "commande", "contenu": "Get-Content main.ts" }
+    { "type": "commande", "contenu": "Get-ChildItem", "index": 0 },
+    { "type": "analyse", "contenu": "Identifier le fichier main.ts", "index": 1 },
+    { "type": "commande", "contenu": "Get-Content main.ts", "index": 2 }
   ],
   "contexte": "terminal (${ OSContext.WindowsPowershell })",
   "complexité": "simple",
@@ -40,9 +41,9 @@ export function generateRitualSequencePrompt(
   {
     exemple = `{
   "étapes": [
-    { "type": "commande", "contenu": "dir" },
-    { "type": "analyse", "contenu": "Identifier le fichier main.ts" },
-    { "type": "commande", "contenu": "type main.ts" }
+    { "type": "commande", "contenu": "dir", "index": 0 },
+    { "type": "analyse", "contenu": "Identifier le fichier main.ts", "index": 1 },
+    { "type": "commande", "contenu": "type main.ts", "index": 2 }
   ],
   "contexte": "terminal (${ OSContext.WindowsCmd })",
   "complexité": "simple",
@@ -52,14 +53,16 @@ export function generateRitualSequencePrompt(
   {
     exemple = `{
   "étapes": [
-    { "type": "commande", "contenu": "ls -l" },
-    { "type": "analyse", "contenu": "Repérer le fichier main.ts" },
-    { "type": "commande", "contenu": "cat main.ts" }
+    { "type": "commande", "contenu": "ls -l", "index": 0 },
+    { "type": "analyse", "contenu": "Repérer le fichier main.ts", "index": 1 },
+    { "type": "commande", "contenu": "cat main.ts", "index": 2 }
   ],
   "contexte": "terminal (${ OSContext.Unix })",  "complexité": "simple",
   "index": 0
 }`;
   }
+
+  const REMEDIATION_EXAMPLE_PROMPT = fs.readFileSync(path.resolve(_dirname, '../prompts/static_parts/remediation_example.promptPart'), 'utf8');
 
   const contexteRituel =
     planPrecedent && indexCourant !== undefined
@@ -70,6 +73,15 @@ export function generateRitualSequencePrompt(
   if(analysisResult)
   {
     analysisContext = `\n## CONTEXTE D'ANALYSE :\nVoici le résultat de l'analyse de l'étape précédente :\n"${ analysisResult }"\nPrends en compte cette analyse pour affiner ou réorienter le plan.`;
+  }
+
+  let lastCompletedStepContext = '';
+  if (context && context.lastCompletedStepIndex !== undefined) {
+    lastCompletedStepContext = `\n## PROGRESSION RITUELLE :\nLe rituel a déjà accompli les étapes jusqu'à l'index ${context.lastCompletedStepIndex}. Lors de la génération du nouveau plan, **tu dois impérativement commencer à l'étape indexée ${context.lastCompletedStepIndex + 1} et ne contenir aucune étape antérieure à cet index.**`;
+  }
+
+  if (startingIndex !== undefined) {
+    lastCompletedStepContext += `\n**Le nouveau plan doit impérativement commencer à l'étape indexée ${startingIndex} et ne contenir aucune étape antérieure à cet index.**`;
   }
 
   let temperatureWarning = '';
@@ -118,10 +130,13 @@ ${ RITUAL_ROLE_PRINCIPLES_PROMPT }
 ## Exemple Minimaliste relatif à notre OS ${ osHint } :
 ${ exemple }
 
+${ REMEDIATION_EXAMPLE_PROMPT }
+
 ${ contexteRituel }
 ${ analysisContext }
+${ lastCompletedStepContext }
 ${ temperatureWarning }
 
-Ta réponse commence directement par "{" sans aucune explication extérieure.
+Ta réponse commence directement par "{" sans aucune explication extérieure. L'attribut "index" de ton PlanRituel doit être égal à l'index de la première étape de ton plan généré. Les étapes du plan précédent peuvent avoir un attribut "fait": "oui" et "output": "<résultat>" pour indiquer qu'elles ont déjà été exécutées. Tiens-en compte pour générer la suite du plan.
 `.trim();
 }

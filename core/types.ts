@@ -3,6 +3,8 @@ export interface Étape
   type: 'commande' | 'analyse' | 'attente' | 'dialogue' | 'question' | 'réponse' | 'changer_dossier' | 'vérification_pré_exécution' | 'confirmation_utilisateur' | 'génération_code';
   contenu: string;
   durée_estimée?: string;
+  fait?: 'oui';
+  output?: any;
 }
 
 export interface PlanRituel
@@ -56,6 +58,7 @@ export interface RituelContext
   chantModeEnabled: boolean;
   narrativeState: NarrativeState;
   emotionalState: KardiosSphairaState;
+  lastCompletedStepIndex?: number;
 }
 
 export interface CommandResult
