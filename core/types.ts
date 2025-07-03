@@ -63,6 +63,7 @@ export interface RituelContext
   currentDirectoryContent?: string;
   operatingSystem?: string;
   personality: 'lurkuitae' | 'lucie';
+  compteur_de_confusion?: number;
 }
 
 export interface CommandResult

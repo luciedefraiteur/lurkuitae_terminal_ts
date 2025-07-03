@@ -60,7 +60,8 @@ Note: Pour la navigation dans les répertoires, utilise l'étape 'changer_dossie
       logosPathos: 0,
       harmoniaEris: 0,
     },
-    personality: 'lurkuitae'
+    personality: 'lurkuitae',
+    compteur_de_confusion: 0
   };
 }
 

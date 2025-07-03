@@ -168,19 +168,41 @@ ${ dream }`, Colors.FgBlue));
 
       if(plan === null)
       {
-        stopCursorAnimation(); // Stop cursor animation on plan generation failure
-        console.error(colorize(`❌ Échec de génération du plan. Le format JSON est invalide ou incomplet. Veuillez vérifier l'entrée.`, Colors.FgRed));
+        context.compteur_de_confusion = (context.compteur_de_confusion || 0) + 1;
         currentRetry++;
+
+        if(context.compteur_de_confusion >= 2)
+        {
+          stopCursorAnimation();
+          console.log(colorize(`\nZNN... OI... Émissaire, le signal est perdu dans le bruit. Mon esprit est confus.`, Colors.FgRed));
+          const newIntent = await ask("Pouvons-nous reprendre avec une intention plus simple ?\n↳ ");
+          lastAnalysisResult = newIntent;
+          context.compteur_de_confusion = 0;
+          plan = null; // Ensure we break the inner loop
+          break; // Break the retry loop to restart the main loop with new intent
+        }
+
+        stopCursorAnimation(); // Stop cursor animation on plan generation failure
+        console.error(colorize(`❌ Échec de génération du plan. Le format JSON est invalide ou incomplet.`, Colors.FgRed));
         if(currentRetry < maxPlanGenerationRetries)
         {
-          console.log(colorize(`Retrying plan generation...`, Colors.FgYellow));
+          console.log(colorize(`Retrying plan generation... (${ currentRetry }/${ maxPlanGenerationRetries })`, Colors.FgYellow));
           startCursorAnimation(); // Restart cursor for retry
         }
+      } else
+      {
+        context.compteur_de_confusion = 0; // Reset on success
       }
     }
 
     if(!plan)
     {
+      // This part is now reached if the confusion threshold was met and we have a new intent,
+      // or if all retries failed.
+      if(lastAnalysisResult)
+      {
+        continue; // Restart the main loop with the new user intent
+      }
       stopCursorAnimation(); // Ensure cursor is stopped if all retries fail
       console.error(colorize(`❌ Échec définitif de génération du plan après ${ maxPlanGenerationRetries } tentatives. Le rituel ne peut pas continuer.`, Colors.FgRed));
       return false; // Cannot proceed without a valid plan
